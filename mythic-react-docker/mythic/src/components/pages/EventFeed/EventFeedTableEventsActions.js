@@ -81,5 +81,4 @@ function EventFeedTableEventsActionsFunc(props){
         )
 }
 export const EventFeedTableEventsActions = React.memo(EventFeedTableEventsActionsFunc);
-EventFeedTableEventsActions.whyDidYouRender = true;
 

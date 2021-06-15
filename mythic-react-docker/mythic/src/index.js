@@ -38,7 +38,7 @@ const FailedRefresh = () =>{
         user: null
     });
 }
-if (localStorage.getItem("user") !== null){
+/*if (localStorage.getItem("user") !== null){
     meState({
         loggedIn: true,
         access_token: localStorage.getItem("access_token"),
@@ -47,7 +47,7 @@ if (localStorage.getItem("user") !== null){
     });
 }else{
     FailedRefresh();
-}
+}*/
 const retryLink = new RetryLink({
   delay: {
     initial: 20,
