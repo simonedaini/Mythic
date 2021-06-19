@@ -2,14 +2,12 @@ import {MythicTabPanel, MythicTabLabel} from '../../../components/MythicComponen
 import React, {useEffect, useRef} from 'react';
 import {useQuery, gql, useMutation, useLazyQuery } from '@apollo/client';
 import { TaskDisplay } from './TaskDisplay';
-import LinearProgress from '@material-ui/core/LinearProgress';
 import { useSnackbar } from 'notistack';
 import { MythicDialog } from '../../MythicComponents/MythicDialog';
 import {TaskParametersDialog} from './TaskParametersDialog';
 import {CallbacksTabsTaskingInput} from './CallbacksTabsTaskingInput';
 import {useReactiveVar} from '@apollo/client';
 import { meState } from '../../../cache';
-import {getBrowserScripts, getSupportScripts, scriptsQuery} from '../../utilities/BrowserScriptHelpers';
 
 
 export function CallbacksTabsTaskingLabel(props){
@@ -72,7 +70,7 @@ query getTasking($callback_id: Int!){
         opsec_pre_bypassed
         opsec_post_blocked
         opsec_post_bypassed
-        parent_task {
+        tasks {
             id
         }
   }
@@ -83,10 +81,9 @@ export const CallbacksTabsTaskingPanel = (props) =>{
     const { enqueueSnackbar } = useSnackbar();
     const me = useReactiveVar(meState);
     const [commands, setCommands] = React.useState([]);
-    const [browserScripts, setBrowserScripts] = React.useState({});
-    const [supportScripts, setSupportScripts] = React.useState({});
     const [openParametersDialog, setOpenParametersDialog] = React.useState(false);
     const [commandInfo, setCommandInfo] = React.useState({});
+    const [taskingData, setTaskingData] = React.useState({task: []});
     const [createTask] = useMutation(createTaskingMutation, {
         update: (cache, {data}) => {
             if(data.createTask.status === "error"){
@@ -112,12 +109,17 @@ export const CallbacksTabsTaskingPanel = (props) =>{
             console.error(data)
         }
         });
-    const [getTasking, { loading: taskingLoading, data: taskingData }] = useLazyQuery(getTaskingQuery, {
+    const [getTasking, { loading: taskingLoading }] = useLazyQuery(getTaskingQuery, {
         onError: data => {
             console.error(data)
         },
-        fetchPolicy: "cache-and-network",
-        pollInterval: 1000
+        fetchPolicy: "network-only",
+        nextFetchPolicy: "network-only",
+        notifyOnNetworkStatusChange: true,
+        pollInterval: 1000,
+        onCompleted: (data) => {
+            setTaskingData(data);
+        }
     });
     const messagesEndRef = useRef(null);
     const scrollToBottom = () => {
@@ -129,10 +131,7 @@ export const CallbacksTabsTaskingPanel = (props) =>{
         getTasking({variables: {callback_id: props.tabInfo.callbackID} });
     }, [getTasking, props.tabInfo.callbackID]);
     
-    useEffect(scrollToBottom, [taskingData]);
-    if (loading) {
-     return <LinearProgress style={{marginTop: "10px"}} />;
-    }
+    //useEffect(scrollToBottom, [taskingData]);
     if (error) {
      console.error(error);
      return <div>Error!</div>;
@@ -177,12 +176,10 @@ export const CallbacksTabsTaskingPanel = (props) =>{
         <MythicTabPanel {...props} >
             <div style={{maxHeight: `calc(${props.maxHeight - 6}vh)`, overflow: "auto", height: `calc(${props.maxHeight - 6}vh)`}}>
             {
-             taskingLoading ? (<LinearProgress style={{marginTop: "10px"}}/>) : (taskingData &&
                 
                 taskingData.task.map( (task) => (
                     <TaskDisplay key={"taskinteractdisplay" + task.id} task={task} command_id={task.command == null ? 0 : task.command.id}  />
                 ))
-             )
             }
             <div ref={messagesEndRef} />
             </div>

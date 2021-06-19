@@ -14,13 +14,11 @@ subscription subResponsesQuery($task_id: Int!) {
 export const ResponseDisplay = (props) =>{
     const [commandID, setCommandID] = React.useState(0);
     const [task, setTask] = React.useState({});
-    const [enableBrowserscripts, setEnableBrowserscripts] = React.useState(true);
     const {loading, error, data} = useSubscription(subResponsesQuery, {variables: {task_id: props.task.id}, fetchPolicy: "cache-and-network"});
     useEffect( () => {
         setCommandID(props.command_id);
         setTask(props.task);
-        setEnableBrowserscripts(props.enable_browserscripts);
-    }, [props.command_id, props.task, props.enable_browserscripts]);
+    }, [props.command_id, props.task]);
     
     if (loading) {
      return <LinearProgress style={{paddingTop: "10px"}}/>;

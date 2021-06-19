@@ -18,10 +18,8 @@ const cache = new InMemoryCache({
     typePolicies: {
         Query: {
             fields: {
-                "Subscription.operationeventlog": {
-                    merge(existing, incoming){
-                        return incoming;
-                    }
+                operationeventlog: {
+                    
                 }
             }
         }

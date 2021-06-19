@@ -64,7 +64,7 @@ query getSubTasking($task_id: Int!){
         opsec_pre_bypassed
         opsec_post_blocked
         opsec_post_bypassed
-        parent_task {
+        tasks {
             id
         }
   }
@@ -159,20 +159,42 @@ const StyledTreeItem = withStyles((theme) => ({
     paddingLeft: 18,
     borderLeft: `1px dashed ${fade(theme.palette.text.primary, 0.4)}`,
   },
-}))((props) => <TreeItem {...props}  />);
+}))((props) => <TreeItem {...props}  />); //
 
 export const TaskDisplay = (props) =>{
     
     const classes = useStyles();
-    
+    const [nodesSelected, setNodesSelected] = React.useState([]);
+
+    const toggleTaskTree = (task_id, selected) => {
+    	if(selected){
+    		// we want to add our treenode to the list if it's not there already
+    		if(nodesSelected.includes("treenode:" + task_id)){
+    			return;
+    		}
+    		setNodesSelected([...nodesSelected, "treenode:" + task_id]);
+    	}else{
+    		// we want to remove our treenode from the list if it's there
+    		const newSelection = nodesSelected.reduce( (prev, cur) => {
+				if(cur === "treenode:" + task_id){
+					return [...prev];
+				}
+				return [...prev, cur];
+    		}, [])
+    		setNodesSelected(newSelection);
+    	}
+    	
+    }
+    const toggleTaskNodes = (event, value) => {
+    	console.log("onNodeToggle", event, value);
+    }
 
   return (
   	<TreeView className={classes.root}
-  		defaultCollapseIcon={<MinusSquare />}
-  		defaultExpandIcon={<PlusSquare />}
-  		defaultEndIcon={<MinusSquare />}
+  		onNodeToggle={toggleTaskNodes}
+  		expanded={nodesSelected}
 	>
-		<TaskRow {...props} />
+		<TaskRow {...props} nodesSelected={nodesSelected} toggleSelection={toggleTaskTree} />
     </TreeView>
   );
 }
@@ -191,16 +213,36 @@ const TaskRow = (props) => {
     const [commandID, setCommandID] = React.useState(0);
     const [task, setTask] = React.useState({});
     const classes = useStyles();
-    const [getSubTasking, { loading: taskingLoading, data: taskingData }] = useLazyQuery(getSubTaskingQuery, {
+    const [taskingData, setTaskingData] = React.useState({task: []});
+    const [isFetchingSubtasks, setIsFetchingSubtasks] = React.useState(false);
+    const [getSubTasking, { loading: taskingLoading, startPolling, stopPolling }] = useLazyQuery(getSubTaskingQuery, {
         onError: data => {
             console.error(data)
         },
-        fetchPolicy: "cache-and-network",
-        pollInterval: 2000
+        fetchPolicy: "network-only",
+        notifyOnNetworkStatusChange: true,
+        onCompleted: (data) => {
+        	if(props.nodesSelected.includes("treenode:" + props.task.id)){
+        		startPolling(2000);
+        	}else{
+        		stopPolling();
+        		setIsFetchingSubtasks(false);
+        		return;
+        	}
+        	setTaskingData(data);
+        }
     });
-    useEffect( () => {
-        getSubTasking({variables: {task_id: props.task.id} });
-    }, [getSubTasking, props.task.id]);
+    const getSubTasks = (event) => {
+    	if(!isFetchingSubtasks){
+        	props.toggleSelection(props.task.id, true);
+        	setIsFetchingSubtasks(true);
+    		getSubTasking({variables: {task_id: props.task.id} });
+    		return;
+		}
+		//// we're already fetching subtasks, but just clicked the minus sign, so stop
+		props.toggleSelection(props.task.id, false);
+		
+    }
     const accordionClasses = accordionUseStyles();
         const toggleBrowserscripts = () => {
         setEnableBrowserscripts(!enableBrowserscripts);
@@ -273,50 +315,56 @@ const TaskRow = (props) => {
         setCommandID(props.command_id);
     }, [props.task, props.command_id]);
     return (
-    	<StyledTreeItem nodeId={"treenode:" + props.task.id} onLabelClick={(evt)=>{evt.preventDefault()}} label={
-    		<Paper className={classes.root} elevation={5}>
-	      <Accordion TransitionProps={{ unmountOnExit: true }} onChange={toggleTaskDropdown} >
-	        <AccordionSummary
-	          expandIcon={<ExpandMoreIcon />}
-	          aria-controls="panel1c-content"
-	          id="panel1c-header"
-	          style={{paddingLeft: 0}}
-	          classes={{content: accordionClasses.content, expandIcon: accordionClasses.expandIcon, root: accordionClasses.root}}
-	        >  
-	          <span style={{display: "flex", margin: 0, borderWidth: 0, padding: 0, minHeight: "48px", alignItems: "center", height: "100%", borderLeft: "6px solid " + getTaskStatusColor(), paddingLeft: "5px"}}>
-	              <div>
-	                {displayComment ? (
-	                    <React.Fragment>
-	                        <Typography className={classes.secondaryHeading}>{props.task.commentOperator.username}</Typography>
-	                        <Typography className={classes.heading}>{props.task.comment}</Typography>
-	                    </React.Fragment>
-	                  ) : (null)}
-	                  
-	                  <div>
-	                    <div className={classes.column}>
-	                        <Badge badgeContent={alertBadges} color="secondary" anchorOrigin={{vertical: 'top', horizontal: 'left'}}>
-	                            {getTaskStatus()}
-	                        </Badge>
-	                      </div>
-	                      {props.task.comment !== "" ? (
-	                        <div className={classes.column}>
-	                            <IconButton size="small" style={{padding: "0", color: muiTheme.palette.info.main}} onClick={toggleDisplayComment}><ChatOutlinedIcon/></IconButton>
-	                          </div>
-	                      ) : (null)}
-	                      <div className={classes.column}>
-	                        <Typography className={classes.heading}>{props.task.command === null ? (props.task.original_params) : (props.task.command.cmd)}</Typography>
-	                      </div><br/>
-	                      <div className={classes.column} >
-	                        <Typography className={dropdownOpen ? classes.secondaryHeadingExpanded : classes.secondaryHeading}>{props.task.command === null ? (null) : (props.task.display_params)}</Typography>
-	                      </div>
-	                </div>
-	            </div>
-	            
-	          </span>
+    	<StyledTreeItem nodeId={"treenode:" + props.task.id} 
+    		onLabelClick={(evt)=>{evt.preventDefault()}} 
+    		onIconClick={getSubTasks}
+    		icon={
+    			props.nodesSelected.includes("treenode:" + props.task.id) ? (<MinusSquare />) : (props.task.tasks.length > 0 ? (<PlusSquare />) : (null) )
+    		}
+    		label={
+    			<Paper className={classes.root} elevation={5}>
+	      			<Accordion TransitionProps={{ unmountOnExit: true }} onChange={toggleTaskDropdown} >
+				        <AccordionSummary
+				          expandIcon={<ExpandMoreIcon />}
+				          aria-controls="panel1c-content"
+				          id="panel1c-header"
+				          style={{paddingLeft: 0}}
+				          classes={{content: accordionClasses.content, expandIcon: accordionClasses.expandIcon, root: accordionClasses.root}}
+				        >  
+				          <span style={{display: "flex", margin: 0, borderWidth: 0, padding: 0, minHeight: "48px", alignItems: "center", height: "100%", borderLeft: "6px solid " + getTaskStatusColor(), paddingLeft: "5px"}}>
+				              <div>
+				                {displayComment ? (
+				                    <React.Fragment>
+				                        <Typography className={classes.secondaryHeading}>{props.task.commentOperator.username}</Typography>
+				                        <Typography className={classes.heading}>{props.task.comment}</Typography>
+				                    </React.Fragment>
+				                  ) : (null)}
+				                  
+				                  <div>
+				                    <div className={classes.column}>
+				                        <Badge badgeContent={alertBadges} color="secondary" anchorOrigin={{vertical: 'top', horizontal: 'left'}}>
+				                            {getTaskStatus()}
+				                        </Badge>
+				                      </div>
+				                      {props.task.comment !== "" ? (
+				                        <div className={classes.column}>
+				                            <IconButton size="small" style={{padding: "0", color: muiTheme.palette.info.main}} onClick={toggleDisplayComment}><ChatOutlinedIcon/></IconButton>
+				                          </div>
+				                      ) : (null)}
+				                      <div className={classes.column}>
+				                        <Typography className={classes.heading}>{props.task.command === null ? (props.task.original_params) : (props.task.command.cmd)}</Typography>
+				                      </div><br/>
+				                      <div className={classes.column} >
+				                        <Typography className={dropdownOpen ? classes.secondaryHeadingExpanded : classes.secondaryHeading}>{props.task.command === null ? (null) : (props.task.display_params)}</Typography>
+				                      </div>
+				                </div>
+				            </div>
+				            
+				          </span>
 	         
-	        </AccordionSummary>
+	        			</AccordionSummary>
 	        
-	        <AccordionActions style={{ padding: "0px", width: "100%"}}>
+	        			<AccordionActions style={{ padding: "0px", width: "100%"}}>
 	          <div className={classes.column} >
 	            <Typography className={classes.secondaryHeading}>Task: {props.task.id}, {props.task.operator.username}, {toLocalTime(props.task.timestamp, me.user.view_utc_time)}</Typography>
 	          </div>
@@ -358,15 +406,16 @@ const TaskRow = (props) => {
 	                    innerDialog={<TaskViewParametersDialog task_id={props.task.id} onClose={()=>{setOpenParametersDialog(false);}} />}
 	                />
 	          </div>
-	        </AccordionActions>
-	        <AccordionDetails className={classes.details}>
-	          <ResponseDisplay task={task} command_id={commandID} enable_browserscripts={enableBrowserscripts}/>
-	        </AccordionDetails>
-	      </Accordion>
-	    	</Paper>} >
-	    	{taskingData && 
+				        </AccordionActions>
+				        <AccordionDetails className={classes.details}>
+				          <ResponseDisplay task={task} command_id={commandID} enable_browserscripts={enableBrowserscripts}/>
+				        </AccordionDetails>
+	      			</Accordion>
+	    		</Paper>
+	    	}>
+	    	{
 	    		taskingData.task.map( (tsk) => (
-    				<TaskRow key={"taskrow: " + tsk.id} task={tsk} />
+    				<TaskRow key={"taskrow: " + tsk.id} task={tsk} nodesSelected={props.nodesSelected} toggleSelection={props.toggleSelection}/>
     			))
 	    	}
 		</StyledTreeItem>
