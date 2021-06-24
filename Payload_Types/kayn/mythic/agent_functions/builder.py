@@ -18,7 +18,7 @@ class MyNewPayload(PayloadType):
     supports_dynamic_loading = True  # setting this to True allows users to only select a subset of commands when generating a payload
     build_parameters = {}
     #  the names of the c2 profiles that your agent supports
-    c2_profiles = ["http"]
+    c2_profiles = ["http", "myp2p"]
     # after your class has been instantiated by the mythic_service in this docker container and all required build parameters have values
     # then this function is called to actually build the payload
     async def build(self) -> BuildResponse:
