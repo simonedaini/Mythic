@@ -40,13 +40,13 @@ def p2p_server(task_id):
                 delegate = {
                     "message": encoded,
                     "uuid": agent.PayloadUUID,
-                    "c2_profile": "http"
+                    "c2_profile": "myp2p"
                 }
             else:
                 delegate = {
                     "message": encoded,
                     "uuid": received_uuid,
-                    "c2_profile": "http"
+                    "c2_profile": "myp2p"
                 }
 
             delegates.append(delegate)
@@ -82,22 +82,6 @@ def p2p_server(task_id):
                         self.end_headers()
                         self.wfile.write(bytes(message, "utf8"))
                         delegates_aswers.remove(answer)
-
-                        # response = {
-                        #     "user_output": "Added edge",
-                        #     "task_id": task_id,
-                        #     "edges": [
-                        #             {
-                        #             "source": agent.UUID,
-                        #             "destination": new_uuid,
-                        #             "direction": 2,
-                        #             "metadata": "",
-                        #             "action": "add",
-                        #             "c2_profile": "http"
-                        #             }
-                        #         ]
-                        #     }
-                        # responses.append(response)
 
 
             else:
