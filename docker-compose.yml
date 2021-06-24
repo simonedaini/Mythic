@@ -1,4 +1,48 @@
 services:
+  http:
+    build: /home/simone/Scrivania/Mythic/C2_Profiles/http
+    network_mode: host
+    hostname: http
+    labels:
+      name: http
+    container_name: http
+    logging:
+      driver: json-file
+      options:
+        max-file: "1"
+        max-size: 10m
+    restart: always
+    volumes:
+    - /home/simone/Scrivania/Mythic/C2_Profiles/http:/Mythic/
+    environment:
+    - MYTHIC_ADDRESS=http://${MYTHIC_SERVER_HOST}:${MYTHIC_SERVER_PORT}/api/v1.4/agent_message
+    - MYTHIC_WEBSOCKET=ws://${MYTHIC_SERVER_HOST}:${MYTHIC_SERVER_PORT}/ws/agent_message
+    - MYTHIC_USERNAME=${RABBITMQ_USER}
+    - MYTHIC_PASSWORD=${RABBITMQ_PASSWORD}
+    - MYTHIC_VIRTUAL_HOST=${RABBITMQ_VHOST}
+    - MYTHIC_HOST=${RABBITMQ_HOST}
+  kayn:
+    build: /home/simone/Scrivania/Mythic/Payload_Types/kayn
+    container_name: kayn
+    environment:
+    - MYTHIC_ADDRESS=http://${MYTHIC_SERVER_HOST}:${MYTHIC_SERVER_PORT}/api/v1.4/agent_message
+    - MYTHIC_WEBSOCKET=ws://${MYTHIC_SERVER_HOST}:${MYTHIC_SERVER_PORT}/ws/agent_message
+    - MYTHIC_USERNAME=${RABBITMQ_USER}
+    - MYTHIC_PASSWORD=${RABBITMQ_PASSWORD}
+    - MYTHIC_VIRTUAL_HOST=${RABBITMQ_VHOST}
+    - MYTHIC_HOST=${RABBITMQ_HOST}
+    hostname: kayn
+    labels:
+      name: kayn
+    logging:
+      driver: json-file
+      options:
+        max-file: "1"
+        max-size: 10m
+    network_mode: host
+    restart: always
+    volumes:
+    - /home/simone/Scrivania/Mythic/Payload_Types/kayn:/Mythic/
   mythic_documentation:
     build: ./documentation-docker
     command: server
