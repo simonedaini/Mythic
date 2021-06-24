@@ -19,8 +19,6 @@ files/
 mythic_access.*
 postgres-docker/database/
 rabbitmq-docker/storage/
-C2_profiles/
-Payload_Types/
 Docker_Templates/
 documentation-docker/content/
 display_output.txt
