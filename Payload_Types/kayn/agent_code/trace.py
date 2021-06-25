@@ -28,3 +28,4 @@ def trace(task_id, command=None):
             }
             
         responses.append(response)
+
