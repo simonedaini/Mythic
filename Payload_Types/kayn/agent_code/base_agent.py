@@ -136,6 +136,12 @@ def get_tasks():
     x = requests.post(agent.Server + ":" + agent.Port + agent.URI, data = uuid + message, headers=agent.UserAgent)
 
     task_list = from64(x.text)
+
+    if task_list:
+        if task_list["tasks"]:
+            print("[+] New Tasks")
+            print("\t" + str(task_list))
+    
     
     if "delegates" in task_list:
         for m in task_list["delegates"]:
@@ -244,6 +250,7 @@ def execute(task):
     else:
         if task['parameters'] != '':
             param_list += "task['parameters'],"
+
 
 
     param_list = param_list[:-1]
