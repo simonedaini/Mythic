@@ -1,10 +1,18 @@
-def run(task_id, command):
+def run(task_id, code):
 
-    print("RUN COMMANDS = " + str(command))
+    global responses
+
+    
+
+    print(code)
+
 
     response = {
-        'task_id': task_id,
-        "user_output": "python executed",
-        'completed': True
-    }
+            'task_id': task_id,
+            "user_output": name,
+            'completed': True
+        }
+
     responses.append(response)
+
+    return
