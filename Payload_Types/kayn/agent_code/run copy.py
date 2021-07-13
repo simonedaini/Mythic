@@ -1,8 +1,9 @@
-def run(task_id, code):
+def run(task_id, code, param):
 
     global responses
 
     print("\t" + code)
+    exec("param=" + param)
     eval(code)
 
 

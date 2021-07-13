@@ -19,8 +19,8 @@ class RunArguments(TaskArguments):
 class RunCommand(CommandBase):
     cmd = "run"
     needs_admin = False
-    help_cmd = "run example.py"
-    description = "This uploads a .py onto the agent and runs it"
+    help_cmd = "run python code passed as argument"
+    description = "This runs the code passed as argument"
     version = 1
     author = "@Kayn93"
     parameters = []
@@ -28,13 +28,6 @@ class RunCommand(CommandBase):
     argument_class = RunArguments
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        total_code = ""
-        code_path = os.path.dirname(self.agent_code_path) + "/shared/" + task.args.command_line
-        try:
-            total_code += open(code_path, "r").read() + "\n"
-            task.args.add_arg("code", total_code)
-        except Exception as e:
-            raise Exception("Failed to find code - " + str(e))
         return task
 
     async def process_response(self, response: AgentResponse):

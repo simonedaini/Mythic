@@ -1,15 +1,19 @@
+from Payload_Types.kayn.shared.prova import initialize
 from mythic import mythic_rest
 import asyncio
+import mythic
 import pexpect
 import time
 import re
 import os
 import threading
+import json
 
 
 async def scripting():
     # sample login
-    mythic = mythic_rest.Mythic(
+    global mythic_instance
+    mythic_instance = mythic_rest.Mythic(
         username="mythic_admin",
         password="tzbYEuFVDuUG9XREgN1OV3kzc4da3U",
         server_ip="192.168.1.10",
@@ -18,16 +22,17 @@ async def scripting():
         global_timeout=-1,
     )
     print("[+] Logging into Mythic")
-    await mythic.login()
-    await mythic.set_or_create_apitoken()
+    await mythic_instance.login()
+    await mythic_instance.set_or_create_apitoken()
     print("[+] Listening for responses")
-    await mythic.listen_for_new_responses(handle_resp)
+    await mythic_instance.listen_for_new_responses(handle_resp)
+    await mythic_instance.listen_for_new_tasks(handle_task)
     
     
 async def handle_resp(token, message):
 
     # just print out the entire message so you can see what you get
-    # await mythic_rest.json_print(message)
+    # await mythic_instance.json_print(message)
     # just print the name of the command that resulted in this response
     # print(message.task.command.cmd)
     # just print the actual response data that came back
@@ -124,6 +129,16 @@ async def handle_resp(token, message):
             char = chr(ord(char) +1)
 
 
+    # if message.task.command.cmd == "parallel":
+    #     print("parallel")
+    #     resp = await mythic_instance.get_all_callbacks()
+    #     print(resp.status)
+    #     print(resp.response_code)
+    #     print(resp.response)
+       
+    #     print("after await")
+
+
 def nmap(args, address):
     print("[+] Starting Nmap scan")
     nmap = pexpect.spawnu("bash")
@@ -131,15 +146,71 @@ def nmap(args, address):
     nmap.sendline("nmap " + args)
     nmap.expect("scanned")
     print("[+] Nmap Done")
+
+
+
+async def handle_task(mythic, message):
+    #print(message)
+    # await mythic_rest.json_print(message)
+
+
+    command = message.command.cmd
+    parameters = message.original_params
+    status = message.status
+
+
+    if command == "parallel" and status == "processed":
+        print("\tCommand = " + command + "\n\tParameters = " + parameters + "\n\tStatus = " + status)
+        resp = await mythic_instance.get_all_callbacks()
+
+        total_code = ""
+        code_path = "./Payload_Types/kayn/shared/prova.py"
+
+        try:
+            total_code += open(code_path, "r").read() + "\n"
+            index = total_code.index("def worker(")
+            worker_code = total_code[index:]
+            preliminary_code = total_code[:index]
+
+            workers = 0
+            param_list = []
+
+            print("[+] exec")
+            exec(str(preliminary_code), globals())
+            initialize()
+            print("[-] exec")
+
+            print("PORASDASD")
+            
+            print("Workers = " + workers)
+            print("Param List = " + param_list)
+        except Exception as e:
+            raise Exception("Failed to find code - " + str(e))
+
+
+        for c in resp.response:
+            if c.active:
+                print(c.ip)
+
+                task = mythic_rest.Task(callback=c, command="shell", params="whoami")
+                submit = await mythic_instance.create_task(task, return_on="submitted")
+                # await mythic_rest.json_print(submit)
+                print("task is submitted, now to wait for responses to process")
+                results = await mythic_instance.gather_task_responses(submit.response.id, timeout=20)
+                print("got array of results of length: " + str(len(results)))
+                print(results[0].response)
+
+ 
     
 
 async def main():
     global local_psw
-    local_psw = input("Insert local sudo password: ")
+    # local_psw = input("Insert local sudo password: ")
+    local_psw = "bubiman10"
     await scripting()
     try:
         while True:
-            pending = asyncio.Task.all_tasks()
+            pending = asyncio.all_tasks()
             plist = []
             for p in pending:
                 if p._coro.__name__ != "main" and p._state == "PENDING":
@@ -149,7 +220,7 @@ async def main():
             else:
                 await asyncio.gather(*plist)
     except KeyboardInterrupt:
-        pending = asyncio.Task.all_tasks()
+        pending = asyncio.all_tasks()
         for t in pending:
             t.cancel()
 
