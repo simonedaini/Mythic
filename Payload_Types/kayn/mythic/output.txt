@@ -1,15 +1,15 @@
 callback_port == "80"
-encrypted_exchange_check == "T"
-headers == [{"name": "User-Agent", "key": "User-Agent", "value": "Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko", "custom": false}]
-callback_host == "http://87.3.200.118"
-get_uri == "index"
-query_path_name == "q"
-proxy_port == ""
-proxy_pass == ""
-killdate == "2022-07-13"
-callback_jitter == "23"
-AESPSK == {"value": "none", "enc_key": null, "dec_key": null}
-post_uri == "data"
 proxy_host == ""
+encrypted_exchange_check == "T"
+callback_host == "http://87.3.200.118"
 proxy_user == ""
+AESPSK == {"value": "none", "enc_key": null, "dec_key": null}
+query_path_name == "q"
+killdate == "2022-07-14"
+proxy_port == ""
+headers == [{"name": "User-Agent", "key": "User-Agent", "value": "Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko", "custom": false}]
+post_uri == "data"
 callback_interval == "10"
+callback_jitter == "23"
+get_uri == "index"
+proxy_pass == ""

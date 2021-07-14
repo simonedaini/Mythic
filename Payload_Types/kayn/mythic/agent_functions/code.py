@@ -5,7 +5,7 @@ import os
 import json
 
 
-class RunArguments(TaskArguments):
+class CodeArguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
         self.args = {}
@@ -14,10 +14,13 @@ class RunArguments(TaskArguments):
         if len(self.command_line) == 0:
             raise ValueError("Need to specify commands to load")
         pass
+        params = self.command_line.split(";;;")
+        self.add_arg("code", params[0])
+        self.add_arg("param", params[1])
 
 
-class RunCommand(CommandBase):
-    cmd = "run"
+class CodeCommand(CommandBase):
+    cmd = "code"
     needs_admin = False
     help_cmd = "run python code passed as argument"
     description = "This runs the code passed as argument"
@@ -25,7 +28,7 @@ class RunCommand(CommandBase):
     author = "@Kayn93"
     parameters = []
     attackmapping = ["T1030", "T1129"]
-    argument_class = RunArguments
+    argument_class = CodeArguments
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task

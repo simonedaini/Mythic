@@ -1,7 +1,10 @@
 def initialize():
-    workers = 5
-    param_list = [1,2,3,4,5]
-    print("initialize done")
+    global workers
+    global param_list
+    workers = 2
+    param_list = ["a", "b"]
+    print("initialize done " + str(workers) + " " + str(param_list))
+
 
 def worker(param):
     print("\ti am the worker " + param)

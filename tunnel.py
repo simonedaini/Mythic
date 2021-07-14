@@ -1,4 +1,3 @@
-from Payload_Types.kayn.shared.prova import initialize
 from mythic import mythic_rest
 import asyncio
 import mythic
@@ -8,6 +7,7 @@ import re
 import os
 import threading
 import json
+
 
 
 async def scripting():
@@ -152,7 +152,10 @@ def nmap(args, address):
 async def handle_task(mythic, message):
     #print(message)
     # await mythic_rest.json_print(message)
-
+    global workers
+    global param_list
+    workers = 0
+    param_list = []
 
     command = message.command.cmd
     parameters = message.original_params
@@ -172,36 +175,32 @@ async def handle_task(mythic, message):
             worker_code = total_code[index:]
             preliminary_code = total_code[:index]
 
-            workers = 0
-            param_list = []
-
             print("[+] exec")
-            exec(str(preliminary_code), globals())
-            initialize()
+            exec(str(preliminary_code))
+            eval("initialize()")
             print("[-] exec")
-
-            print("PORASDASD")
             
-            print("Workers = " + workers)
-            print("Param List = " + param_list)
+            print("Workers = " + str(workers))
+            print("Param List = " + str(param_list))
         except Exception as e:
             raise Exception("Failed to find code - " + str(e))
 
+        i = 0
+        while i < workers:
+            for c in resp.response:
+                if i < workers:
+                    if c.active:
+                        print(c.ip)
+                        task = mythic_rest.Task(callback=c, command="code", params=str(worker_code) + ";;;" + str(param_list[i]))
+                        submit = await mythic_instance.create_task(task, return_on="submitted")
+                        # await mythic_rest.json_print(submit)
+                        print("task is submitted, now to wait for responses to process")
+                        results = await mythic_instance.gather_task_responses(submit.response.id, timeout=20)
+                        print("got array of results of length: " + str(len(results)))
+                        print(results[0].response)
+                        i += 1
 
-        for c in resp.response:
-            if c.active:
-                print(c.ip)
 
-                task = mythic_rest.Task(callback=c, command="shell", params="whoami")
-                submit = await mythic_instance.create_task(task, return_on="submitted")
-                # await mythic_rest.json_print(submit)
-                print("task is submitted, now to wait for responses to process")
-                results = await mythic_instance.gather_task_responses(submit.response.id, timeout=20)
-                print("got array of results of length: " + str(len(results)))
-                print(results[0].response)
-
- 
-    
 
 async def main():
     global local_psw
