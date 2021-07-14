@@ -17,12 +17,13 @@ class CodeArguments(TaskArguments):
         params = self.command_line.split(";;;")
         self.add_arg("code", params[0])
         self.add_arg("param", params[1])
+        self.add_arg("parallel_id", params[2])
 
 
 class CodeCommand(CommandBase):
     cmd = "code"
     needs_admin = False
-    help_cmd = "run python code passed as argument"
+    help_cmd = "auxiliary function to run python code in parallel"
     description = "This runs the code passed as argument"
     version = 1
     author = "@Kayn93"

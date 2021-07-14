@@ -7,8 +7,7 @@ import re
 import os
 import threading
 import json
-
-
+from datetime import datetime
 
 async def scripting():
     # sample login
@@ -31,15 +30,14 @@ async def scripting():
     
 async def handle_resp(token, message):
 
-    # just print out the entire message so you can see what you get
-    # await mythic_instance.json_print(message)
-    # just print the name of the command that resulted in this response
+    # # just print out the entire message so you can see what you get
+    # await mythic_rest.json_print(message)
+    # # just print the name of the command that resulted in this response
     # print(message.task.command.cmd)
-    # just print the actual response data that came back
+    # # just print the actual response data that came back
     # print(message.response)
 
     if message.task.command.cmd == "nmap":
-        print("è DAVVERO NMAP")
 
         if "keylog" in message.response:
             print("WE DONT HAVE THE PASSWORD")
@@ -129,14 +127,11 @@ async def handle_resp(token, message):
             char = chr(ord(char) +1)
 
 
-    # if message.task.command.cmd == "parallel":
-    #     print("parallel")
-    #     resp = await mythic_instance.get_all_callbacks()
-    #     print(resp.status)
-    #     print(resp.response_code)
-    #     print(resp.response)
-       
-    #     print("after await")
+    if message.task.command.cmd == "code":
+        await mythic_rest.json_print(message)
+        f = open("parallel_" + message.task.original_params.split(";;;")[2], "a+")
+        f.write("Agent Task ID: " + message.task.agent_task_id + "\n" + message.response + "\n")
+        print("parallel_" + message.task.original_params.split(";;;")[2])
 
 
 def nmap(args, address):
@@ -152,17 +147,21 @@ def nmap(args, address):
 async def handle_task(mythic, message):
     #print(message)
     # await mythic_rest.json_print(message)
-    global workers
-    global param_list
-    workers = 0
-    param_list = []
-
-    command = message.command.cmd
-    parameters = message.original_params
-    status = message.status
 
 
-    if command == "parallel" and status == "processed":
+
+    if message.command.cmd == "parallel" and message.status == "processed":
+
+        global workers
+        global param_list
+        workers = 0
+        param_list = []
+
+        command = message.command.cmd
+        parameters = message.original_params
+        status = message.status
+
+
         print("\tCommand = " + command + "\n\tParameters = " + parameters + "\n\tStatus = " + status)
         resp = await mythic_instance.get_all_callbacks()
 
@@ -175,29 +174,29 @@ async def handle_task(mythic, message):
             worker_code = total_code[index:]
             preliminary_code = total_code[:index]
 
-            print("[+] exec")
             exec(str(preliminary_code))
             eval("initialize()")
-            print("[-] exec")
             
             print("Workers = " + str(workers))
             print("Param List = " + str(param_list))
         except Exception as e:
             raise Exception("Failed to find code - " + str(e))
 
-        i = 0
+
+        now = datetime.now()
+        i=0
         while i < workers:
             for c in resp.response:
-                if i < workers:
+                if i < workers :
                     if c.active:
-                        print(c.ip)
-                        task = mythic_rest.Task(callback=c, command="code", params=str(worker_code) + ";;;" + str(param_list[i]))
+                        task = mythic_rest.Task(callback=c, command="code", params=str(worker_code) + ";;;" + str(param_list[i]) + ";;;" + str(now))
                         submit = await mythic_instance.create_task(task, return_on="submitted")
                         # await mythic_rest.json_print(submit)
-                        print("task is submitted, now to wait for responses to process")
-                        results = await mythic_instance.gather_task_responses(submit.response.id, timeout=20)
-                        print("got array of results of length: " + str(len(results)))
-                        print(results[0].response)
+                        # print("task is submitted, now wait for responses to process")
+                        # results = await mythic_instance.gather_task_responses(submit.response.id, timeout=20)
+                        # print("got array of results of length: " + str(len(results)))
+                        # print(results[0].response)
+                        # print("\t" + str(i) + ")" + " Param = " + str(param_list[i]))
                         i += 1
 
 
