@@ -1,4 +1,4 @@
-def parallel(task_id, command):
+def parallel(task_id, file_name, workers):
     
     response = {
             'task_id': task_id,

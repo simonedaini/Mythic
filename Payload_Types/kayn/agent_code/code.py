@@ -1,4 +1,4 @@
-def code(task_id, code, param):
+def code(task_id, code, param, parallel_id):
 
     global responses
 

@@ -1,3 +1,4 @@
+from Payload_Types.kayn.shared.prova import worker
 from mythic import mythic_rest
 import asyncio
 import mythic
@@ -128,10 +129,9 @@ async def handle_resp(token, message):
 
 
     if message.task.command.cmd == "code":
-        await mythic_rest.json_print(message)
+        # await mythic_rest.json_print(message)
         f = open("parallel_" + message.task.original_params.split(";;;")[2], "a+")
         f.write("Agent Task ID: " + message.task.agent_task_id + "\n" + message.response + "\n")
-        print("parallel_" + message.task.original_params.split(";;;")[2])
 
 
 def nmap(args, address):
@@ -158,15 +158,15 @@ async def handle_task(mythic, message):
         param_list = []
 
         command = message.command.cmd
-        parameters = message.original_params
+        parameters = message.original_params.split()
         status = message.status
 
 
-        print("\tCommand = " + command + "\n\tParameters = " + parameters + "\n\tStatus = " + status)
+        print("\tCommand = " + command + "\n\tFile Name = " + parameters[0] +"\n\tWorkers = " + parameters[1] + "\n\tStatus = " + status)
         resp = await mythic_instance.get_all_callbacks()
 
         total_code = ""
-        code_path = "./Payload_Types/kayn/shared/prova.py"
+        code_path = "./Payload_Types/kayn/shared/" + parameters[0]
 
         try:
             total_code += open(code_path, "r").read() + "\n"
@@ -174,8 +174,18 @@ async def handle_task(mythic, message):
             worker_code = total_code[index:]
             preliminary_code = total_code[:index]
 
+            workers = int(parameters[1])
+
+            if workers == 0:
+                for c in resp.response:
+                    if c.active:
+                        workers += 1
+
+                print("[+] Workers automatically set to {}".format(workers))
+
             exec(str(preliminary_code))
             eval("initialize()")
+            
             
             print("Workers = " + str(workers))
             print("Param List = " + str(param_list))
@@ -187,16 +197,9 @@ async def handle_task(mythic, message):
         i=0
         while i < workers:
             for c in resp.response:
-                if i < workers :
                     if c.active:
                         task = mythic_rest.Task(callback=c, command="code", params=str(worker_code) + ";;;" + str(param_list[i]) + ";;;" + str(now))
                         submit = await mythic_instance.create_task(task, return_on="submitted")
-                        # await mythic_rest.json_print(submit)
-                        # print("task is submitted, now wait for responses to process")
-                        # results = await mythic_instance.gather_task_responses(submit.response.id, timeout=20)
-                        # print("got array of results of length: " + str(len(results)))
-                        # print(results[0].response)
-                        # print("\t" + str(i) + ")" + " Param = " + str(param_list[i]))
                         i += 1
 
 

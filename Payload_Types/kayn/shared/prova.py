@@ -1,8 +1,9 @@
 def initialize():
     global workers
     global param_list
-    workers = 5
-    param_list = [123, 43543, 2134, 4356565, 111111]
+    param_list = []
+    for i in range(workers):
+        param_list.append(i)
 
 def worker(param):
     print("\ti am the worker " + param)

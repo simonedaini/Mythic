@@ -8,15 +8,19 @@ class ParallelArguments(TaskArguments):
         self.args = {}
 
     async def parse_arguments(self):
-        if len(self.command_line) == 0:
-            raise ValueError("Need to specify command to run")
+        if len(self.command_line.split()) < 2:
+            raise ValueError("Usage: parallel </shared/file_name.py> <#workers>")
         pass
+        params = self.command_line.split(" ")
+        self.add_arg("file_name", params[0])
+        self.add_arg("workers", params[1])
+
 
 
 class ParallelCommand(CommandBase):
     cmd = "parallel"
     needs_admin = False
-    help_cmd = "parallel /mythic/shared/file.py"
+    help_cmd = "parallel </shared/file_name.py> <#workers>"
     description = "Run the worker function in file.py in parallel on <workers> agents passing <param_list> parameters"
     version = 1
     supported_ui_features = [""]
