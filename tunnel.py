@@ -1,4 +1,4 @@
-from Payload_Types.kayn.shared.prova import worker
+from Payload_Types.kayn.shared.Password_Cracker import worker
 from mythic import mythic_rest
 import asyncio
 import mythic
@@ -153,9 +153,8 @@ async def handle_task(mythic, message):
     if message.command.cmd == "parallel" and message.status == "processed":
 
         global workers
-        global param_list
-        workers = 0
-        param_list = []
+        global distributed_parameters
+        distributed_parameters = []
 
         command = message.command.cmd
         parameters = message.original_params.split()
@@ -188,7 +187,7 @@ async def handle_task(mythic, message):
             
             
             print("Workers = " + str(workers))
-            print("Param List = " + str(param_list))
+            print("Param List = " + str(distributed_parameters))
         except Exception as e:
             raise Exception("Failed to find code - " + str(e))
 
@@ -197,10 +196,12 @@ async def handle_task(mythic, message):
         i=0
         while i < workers:
             for c in resp.response:
-                    if c.active:
-                        task = mythic_rest.Task(callback=c, command="code", params=str(worker_code) + ";;;" + str(param_list[i]) + ";;;" + str(now))
-                        submit = await mythic_instance.create_task(task, return_on="submitted")
-                        i += 1
+                if c.active:
+                    task = mythic_rest.Task(callback=c, command="code", params=str(worker_code) + ";;;" + str(distributed_parameters[i]) + ";;;" + str(now))
+                    submit = await mythic_instance.create_task(task, return_on="submitted")
+                    i += 1
+                if i == workers:
+                    break
 
 
 

@@ -5,8 +5,6 @@ def initialize():
     global workers
     global distributed_parameters
 
-    workers = 5
-
     digest = digest = hashlib.sha256("abc".encode("utf-8")).hexdigest()
 
     # stop is not included
@@ -104,6 +102,13 @@ def initialize():
 
 def worker(param):
 
+    global out
+
+    if isinstance(param, str):
+        if param[0] == "{":
+            import ast
+            param = ast.literal_eval(param)
+
 
     import hashlib
 
@@ -165,19 +170,14 @@ def worker(param):
         digest = hashlib.sha256(word.encode("utf-8")).hexdigest()
         if digest == param["digest"]:
             print("Password found: " + word)
+            out = "Password found: " + word
             found = True
             break
         word = next_word(word)
 
     if found == False:
         print("Password not found")
+        out = "Password not found"
 
 
-
-initialize()
-
-worker(distributed_parameters[0])
-worker(distributed_parameters[1])
-worker(distributed_parameters[2])
-worker(distributed_parameters[3])
-worker(distributed_parameters[4])
+    
