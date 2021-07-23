@@ -1,4 +1,6 @@
 def ls(task_id, path, third):
+    import stat
+
     global responses
 
     path = path.replace("\\", "")
@@ -29,7 +31,7 @@ def ls(task_id, path, third):
             access_time = "Not Allowed"
 
         size = 0
-        if os.path.isdir(f):
+        if os.path.isdir(fullpath):
             try:
                 for path, dirs, files in os.walk(file_path):
                     for x in files:

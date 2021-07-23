@@ -1,15 +1,15 @@
-callback_host == "http://87.3.200.118"
-callback_jitter == "23"
+proxy_port == ""
+killdate == "2022-07-23"
+proxy_host == ""
 proxy_user == ""
+encrypted_exchange_check == "T"
+callback_host == "http://87.3.200.118"
+proxy_pass == ""
+callback_jitter == "23"
+get_uri == "index"
+callback_interval == "10"
+headers == [{"name": "User-Agent", "key": "User-Agent", "value": "Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko", "custom": false}]
 post_uri == "data"
 callback_port == "80"
+AESPSK == {"value": "aes256_hmac", "enc_key": "bGz6DR5EOmcL0D6gLHh/tYn1MmWM3MbRFpX+JQMsvyo=", "dec_key": "bGz6DR5EOmcL0D6gLHh/tYn1MmWM3MbRFpX+JQMsvyo="}
 query_path_name == "q"
-headers == [{"name": "User-Agent", "key": "User-Agent", "value": "Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko", "custom": false}]
-proxy_pass == ""
-encrypted_exchange_check == "T"
-proxy_port == ""
-get_uri == "index"
-killdate == "2022-07-16"
-proxy_host == ""
-AESPSK == {"value": "aes256_hmac", "enc_key": "aCWfeIZOb6wJUkmNzoMdrGZtvzQ66XEHTIL48+SEATE=", "dec_key": "aCWfeIZOb6wJUkmNzoMdrGZtvzQ66XEHTIL48+SEATE="}
-callback_interval == "10"

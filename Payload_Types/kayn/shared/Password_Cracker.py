@@ -5,7 +5,7 @@ def initialize():
     global workers
     global distributed_parameters
 
-    digest = digest = hashlib.sha256("abc".encode("utf-8")).hexdigest()
+    digest = digest = hashlib.sha256("edcba".encode("utf-8")).hexdigest()
 
     # stop is not included
     start1 = 97 #a
@@ -20,7 +20,7 @@ def initialize():
     stop5 = 39 #&
 
     char_num = stop1 - start1 + stop2 - start2 + stop3 - start3 + stop4 - start4 + stop5 - start5
-    maxlen = 3
+    maxlen = 5
     total_words = int(math.pow(char_num, maxlen))
 
     words_per_worker = math.ceil(total_words/workers)
@@ -71,32 +71,73 @@ def initialize():
 
     split = []
 
-    for i in range(total_words):
-        if i % words_per_worker == 0:
+    # for i in range(total_words):
+    #     if i % words_per_worker == 0:
+    #         split.append(word)
+    #     word = next_word(word)
+
+
+    char_per_worker = math.ceil(char_num/workers)
+
+    print("{} workers, {} chars = {} chars per worker".format(workers, char_num, char_per_worker))
+
+
+    for i in range(char_num):
+        if i% char_per_worker == 0:
             split.append(word)
         word = next_word(word)
 
 
-    distributed_parameters = []
+        distributed_parameters = []
     for i in range(workers):
+        s = ""
+        e = ""
+        if i == 0 and i == workers - 1:
+            s = "a"
+            for j in range(maxlen):
+                e += chr(stop5-1)
 
-        if i < workers - 1:
             param = {
                 "digest" : digest,
-                "start": split[i],
-                "end": split[i+1]
+                "start": s,
+                "end": e
+            }
+        elif i == 0:
+            s = "a"
+            for j in range(maxlen):
+                e += split[i+1]
+
+            param = {
+                "digest" : digest,
+                "start": s,
+                "end": e
+            }
+
+        elif i < workers - 1:
+            for j in range(maxlen):
+                s += split[i]
+                e += split[i+1]
+
+            param = {
+                "digest" : digest,
+                "start": s,
+                "end": e
             }
         else:
-            end = ""
             for j in range(maxlen):
-                end += chr(stop5-1)
+                s += split[i]
+                e += chr(stop5-1)
             param = {
                 "digest" : digest,
-                "start": split[i],
-                "end": end
+                "start": s,
+                "end": e
             }
 
         distributed_parameters.append(param)
+        
+    print(distributed_parameters)
+
+    print("len parameters = {}".format(len(distributed_parameters)))
     
 
 

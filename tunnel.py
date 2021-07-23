@@ -1,4 +1,3 @@
-from Payload_Types.kayn.shared.Password_Cracker import worker
 from mythic import mythic_rest
 import asyncio
 import mythic

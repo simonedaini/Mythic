@@ -10,14 +10,8 @@ def upload(task_id, file_id, remote_path):
         'full_path': "",
         'task_id': task_id,
     }
-    serialized = json.dumps(upload)
 
-    message = to64(serialized)
-    uuid = to64(agent.UUID)
-
-    x = requests.post(agent.Server + agent.URI, data = uuid + message, headers=agent.UserAgent)
-    
-    res = from64(x.text)
+    res = send(upload, agent.UUID)
 
     res = res['chunk_data']
 
