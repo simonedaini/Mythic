@@ -74,7 +74,7 @@ class HTTP(C2Profile):
         C2ProfileParameter(
             name="callback_host",
             description="Callback Host",
-            default_value="http://87.3.200.118,
+            default_value="http://87.3.195.225,
             verifier_regex="^(http|https):\/\/[a-zA-Z0-9]+",
         ),
         C2ProfileParameter(
