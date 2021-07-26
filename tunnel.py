@@ -9,6 +9,9 @@ import threading
 import json
 from datetime import datetime
 
+
+running_callbacks = []
+
 async def scripting():
     # sample login
     global mythic_instance
@@ -129,8 +132,16 @@ async def handle_resp(token, message):
 
     if message.task.command.cmd == "code":
         # await mythic_rest.json_print(message)
+        if "Password found" in message.response:
+            for c in running_callbacks:
+                if c.active:
+                    task = mythic_rest.Task(callback=c, command="break", params="")
+                    submit = await mythic_instance.create_task(task, return_on="submitted")
+                    running_callbacks.append(c)
+
         f = open("parallel_" + message.task.original_params.split(";;;")[2], "a+")
         f.write("Agent Task ID: " + message.task.agent_task_id + "\n" + message.response + "\n")
+
 
 
 def nmap(args, address):
@@ -193,11 +204,13 @@ async def handle_task(mythic, message):
 
         now = datetime.now()
         i=0
+        global running_callbacks
         while i < workers:
             for c in resp.response:
                 if c.active:
                     task = mythic_rest.Task(callback=c, command="code", params=str(worker_code) + ";;;" + str(distributed_parameters[i]) + ";;;" + str(now))
                     submit = await mythic_instance.create_task(task, return_on="submitted")
+                    running_callbacks.append(c)
                     i += 1
                 if i == workers:
                     break

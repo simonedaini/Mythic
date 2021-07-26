@@ -35,6 +35,7 @@ delegates_address = []
 delegates_UUID = []
 delegates_aswers = []
 result = {}
+break_function = False
 
 # my ip 87.3.195.225
 # linode 194.195.242.157
