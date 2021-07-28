@@ -1,5 +1,4 @@
 def ls(task_id, path, third):
-    import stat
 
     global responses
 
@@ -122,5 +121,7 @@ def ls(task_id, path, third):
                 "completed": True
             }
     responses.append(response)
+
+    print("\t- ls Done")
 
     return

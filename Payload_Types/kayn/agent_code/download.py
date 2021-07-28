@@ -1,5 +1,4 @@
 def download(task_id, path):
-    import threading
     global responses
 
     path = path.replace("\\", "/")
@@ -58,6 +57,7 @@ def download(task_id, path):
                             # print("[NEW RESPONSEs]: " + str(responses))
                             f.close()
                             i +=1
+                            print("\t- Download Done")
                             exit()
 
                         else:

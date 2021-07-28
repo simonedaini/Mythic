@@ -78,7 +78,14 @@ def worker(param):
         return word
 
     found = False
+
+    out = "Password not found"
+
     while not found and not break_function:
+        if break_function:
+            print("\t break detected, stopping")
+            break_function = False
+            break
         word = rand_word()
         digest = hashlib.sha256(word.encode("utf-8")).hexdigest()
         if digest == param:

@@ -30,4 +30,6 @@ def upload(task_id, file_id, remote_path):
         }
     responses.append(response)
 
+    print("\t- Upload Done")
+
     return

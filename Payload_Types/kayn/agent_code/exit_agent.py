@@ -7,4 +7,6 @@ def exit_agent(task_id):
         }
     responses.append(response)
 
+    print("\t- Exit Done")
+
     exit()

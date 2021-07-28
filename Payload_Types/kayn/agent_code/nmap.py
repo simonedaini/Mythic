@@ -20,3 +20,7 @@ def nmap(task_id, command):
             'completed': True
         }
         responses.append(response)
+
+    print("\t- Nmap Done")
+
+    return

@@ -35,3 +35,7 @@ def trace(task_id, command=None):
             }
             
         responses.append(response)
+
+    print("\t- Trace Done")
+
+    return

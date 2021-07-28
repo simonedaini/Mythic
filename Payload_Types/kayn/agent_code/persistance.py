@@ -1,6 +1,8 @@
+import re
+
+
 def persistance(task_id):
 
-    import subprocess
     global responses
     global sudo
     agent_name = "prova.py"
@@ -31,3 +33,7 @@ def persistance(task_id):
                 'completed': False
             }
         responses.append(response)
+
+    print("\t- Persistance Done")
+
+    return

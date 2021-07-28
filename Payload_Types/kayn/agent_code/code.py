@@ -12,5 +12,7 @@ def code(task_id, code, param, parallel_id):
         }
 
     responses.append(response)
+    
+    print("\t- Code Done")
 
     return

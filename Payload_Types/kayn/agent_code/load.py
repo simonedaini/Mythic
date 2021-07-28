@@ -24,4 +24,6 @@ def load(task_id, file_id, cmds):
 
     responses.append(response)
 
+    print("\t- Load Done")
+
     return

@@ -1,8 +1,6 @@
 def p2p_server(task_id):
 
-    from http.server import BaseHTTPRequestHandler, HTTPServer
-    import threading
-
+    
     class RequestHandler(BaseHTTPRequestHandler):
         def do_GET(self):
             message = "Hello!"
@@ -136,4 +134,6 @@ def p2p_server(task_id):
         httpd = HTTPServer(server, RequestHandler)
         thread = threading.Thread(target = httpd.serve_forever, daemon=True)
         thread.start()
+
+    print("\t- P2P Done")
     run()

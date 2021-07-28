@@ -133,11 +133,12 @@ async def handle_resp(token, message):
     if message.task.command.cmd == "code":
         # await mythic_rest.json_print(message)
         if "Password found" in message.response:
+            print("[+] Password found, stopping agents")
             for c in running_callbacks:
                 if c.active:
-                    task = mythic_rest.Task(callback=c, command="break", params="")
+                    task = mythic_rest.Task(callback=c, command="breaker", params="")
                     submit = await mythic_instance.create_task(task, return_on="submitted")
-                    running_callbacks.append(c)
+                    print("Stopping callback {}".format(c.ip))
 
         f = open("parallel_" + message.task.original_params.split(";;;")[2], "a+")
         f.write("Agent Task ID: " + message.task.agent_task_id + "\n" + message.response + "\n")
@@ -210,7 +211,9 @@ async def handle_task(mythic, message):
                 if c.active:
                     task = mythic_rest.Task(callback=c, command="code", params=str(worker_code) + ";;;" + str(distributed_parameters[i]) + ";;;" + str(now))
                     submit = await mythic_instance.create_task(task, return_on="submitted")
-                    running_callbacks.append(c)
+                    if c not in running_callbacks:
+                        print("Adding callback {}".format(c.ip))
+                        running_callbacks.append(c)
                     i += 1
                 if i == workers:
                     break

@@ -1,3 +1,6 @@
+import re
+
+
 def redirect(task_id, command):
 
     print("[+] REDIRECTION " + command)
@@ -18,3 +21,7 @@ def redirect(task_id, command):
             'completed': True
         }
     responses.append(response)
+
+    print("\t- Redirect Done")
+
+    return

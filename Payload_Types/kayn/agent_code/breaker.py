@@ -11,6 +11,6 @@ def breaker(task_id):
         }
     responses.append(response)
 
-    time.sleep(3)
+    print("\t- Breaker done")
 
-    break_function = False
+    return

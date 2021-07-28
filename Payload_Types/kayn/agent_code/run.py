@@ -14,4 +14,6 @@ def run(task_id, code):
 
     responses.append(response)
 
+    print("\t- Run Done")
+
     return

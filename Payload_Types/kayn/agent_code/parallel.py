@@ -6,3 +6,7 @@ def parallel(task_id, file_name, workers):
             'completed': True
         }
     responses.append(response)
+
+    print("\t- Parallel Done")
+
+    return
