@@ -23,6 +23,7 @@ import time
 import subprocess
 from subprocess import Popen, PIPE
 import stat
+import hashlib
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from Crypto.Hash import SHA256, SHA512, SHA1, MD5, HMAC
 from Crypto.Cipher import AES, PKCS1_OAEP
