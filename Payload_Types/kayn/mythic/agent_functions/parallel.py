@@ -9,11 +9,14 @@ class ParallelArguments(TaskArguments):
 
     async def parse_arguments(self):
         if len(self.command_line.split()) < 2:
-            raise ValueError("Usage: parallel </shared/file_name.py> <#workers>")
+            raise ValueError("Usage: parallel </shared/file_name.py> <#workers> <parameters>")
         pass
         params = self.command_line.split(" ")
         self.add_arg("file_name", params[0])
         self.add_arg("workers", params[1])
+
+        if len(self.command_line.split()) >= 2:
+            self.add_arg("parameters", params[2:])
 
 
 
