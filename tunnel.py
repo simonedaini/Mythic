@@ -142,7 +142,7 @@ async def handle_resp(token, message):
             print(colored("\t - Password found, stopping agents", "green"))
             for c in running_callbacks:
                 if c.active and c.id != message.task.callback.id:
-                    task = mythic_rest.Task(callback=c, command="breaker", params="")
+                    task = mythic_rest.Task(callback=c, command="stop", params="parallel")
                     submit = await mythic_instance.create_task(task, return_on="submitted")
 
         f = open("parallel_" + message.task.original_params.split(";;;")[2], "a+")
@@ -203,19 +203,20 @@ async def handle_task(mythic, message):
 
         try:
             total_code += open(code_path, "r").read() + "\n"
-            index = total_code.index("def worker(")
-            worker_code = total_code[index:]
-            preliminary_code = total_code[:index]         
-
-            exec(str(preliminary_code))
-            if additional != "":
-                eval("initialize(additional)")
-            else:
-                eval("initialize()")
             
         except Exception as e:
             print(colored("\t - Failed to open {}".format(parameters[0]), "red"))
             return
+
+        index = total_code.index("def worker(")
+        worker_code = total_code[index:]
+        preliminary_code = total_code[:index]         
+
+        exec(str(preliminary_code))
+        if additional != "":
+            eval("initialize(additional)")
+        else:
+            eval("initialize()")
 
         now = datetime.now()
         i=0

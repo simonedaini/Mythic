@@ -21,11 +21,6 @@ def initialize():
 def worker(param):
 
     global stopping_functions
-
-    import random
-    import math
-    import hashlib
-
     global out
 
     maxlen = 3
@@ -84,10 +79,10 @@ def worker(param):
 
     out = "Password not found"
 
-    while not found and "parallel" not in stopping_functions:
-        if break_function:
+    while not found:
+        if "parallel" in stopping_functions:
             print(colored("\t - Stopped", "red"))
-            stopping_functions.remove["parallel"]
+            stopping_functions.remove('parallel')
             break
         word = rand_word()
         digest = hashlib.sha256(word.encode("utf-8")).hexdigest()

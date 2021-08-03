@@ -79,7 +79,7 @@ def worker(param):
 
     out = "Password not found"
 
-    while not found and not "parallel" in stopping_functions:
+    while not found:
         if "parallel" in stopping_functions:
             print(colored("\t - Stopped", "red"))
             stopping_functions.remove('parallel')

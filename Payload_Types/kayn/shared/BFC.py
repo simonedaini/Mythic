@@ -184,6 +184,10 @@ def worker(param):
     word = param['start']
 
     while word != param["end"]:
+        if "parallel" in stopping_functions:
+            print(colored("\t - Stopped", "red"))
+            stopping_functions.remove('parallel')
+            break
         digest = hashlib.sha256(word.encode("utf-8")).hexdigest()
         if digest == param["digest"]:
             out = "Password found: " + word
