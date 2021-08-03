@@ -1,12 +1,9 @@
 def initialize():
-    import math
-    import hashlib
 
     global workers
     global distributed_parameters
 
-    prova = input("Prova input")
-    digest = digest = hashlib.sha256("edcba".encode("utf-8")).hexdigest()
+    digest = hashlib.sha256("abc".encode("utf-8")).hexdigest()
 
     # stop is not included
     start1 = 97 #a
@@ -21,12 +18,7 @@ def initialize():
     stop5 = 39 #&
 
     char_num = stop1 - start1 + stop2 - start2 + stop3 - start3 + stop4 - start4 + stop5 - start5
-    maxlen = 5
-    total_words = int(math.pow(char_num, maxlen))
-
-    words_per_worker = math.ceil(total_words/workers)
-    print("{} workers, {} words = {} words per worker".format(workers, total_words, words_per_worker))
-
+    maxlen = 3
 
     def next_char(value):
         value += 1
@@ -72,16 +64,7 @@ def initialize():
 
     split = []
 
-    # for i in range(total_words):
-    #     if i % words_per_worker == 0:
-    #         split.append(word)
-    #     word = next_word(word)
-
-
     char_per_worker = math.ceil(char_num/workers)
-
-    print("{} workers, {} chars = {} chars per worker".format(workers, char_num, char_per_worker))
-
 
     for i in range(char_num):
         if i% char_per_worker == 0:
@@ -134,12 +117,7 @@ def initialize():
                 "end": e
             }
 
-        distributed_parameters.append(param)
-        
-    print(distributed_parameters)
-
-    print("len parameters = {}".format(len(distributed_parameters)))
-    
+        distributed_parameters.append(param)   
 
 
 def worker(param):
@@ -147,12 +125,9 @@ def worker(param):
     global out
 
     if isinstance(param, str):
+        param = param.strip()
         if param[0] == "{":
-            import ast
             param = ast.literal_eval(param)
-
-
-    import hashlib
 
     start1 = 97 #a
     stop1 = 123 #z
@@ -211,15 +186,15 @@ def worker(param):
     while word != param["end"]:
         digest = hashlib.sha256(word.encode("utf-8")).hexdigest()
         if digest == param["digest"]:
-            print("Password found: " + word)
             out = "Password found: " + word
+            print(out)
             found = True
             break
         word = next_word(word)
 
     if found == False:
-        print("Password not found")
         out = "Password not found"
+        print(out)
 
 
     

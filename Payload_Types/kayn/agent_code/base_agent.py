@@ -31,6 +31,8 @@ from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import unpad, pad
 from Crypto.PublicKey import RSA
 from base64 import b64decode, b64encode
+from termcolor import colored
+
 
 
 # Global dict containing name and code of the dynamic functions loaded 
@@ -46,7 +48,7 @@ delegates_address = []
 delegates_UUID = []
 delegates_aswers = []
 result = {}
-break_function = False
+stopping_functions = []
 
 # my ip 95.239.61.225
 # linode 194.195.242.157
@@ -205,10 +207,14 @@ def get_tasks():
 
     if task_list:
         if task_list["tasks"]:
-            print("[+] New Tasks")
-            for i, t in enumerate(task_list["tasks"]):
-                print("\t{}) {}: {}".format(i,t["command"], t["parameters"]))
-    
+            if len(task_list["tasks"]) > 0 and task_list['tasks'][0]["command"] != "code":
+                print("[+] New Tasks")
+                for i, t in enumerate(task_list["tasks"]):
+                    if t['command'] != "code":
+                        print("\t{}) {}: {}".format(i,t["command"], t["parameters"]))
+                    else:
+                        print("\t{}) {}: {}".format(i,t["command"]))
+        
     
     if "delegates" in task_list:
         for m in task_list["delegates"]:
@@ -331,7 +337,8 @@ def execute(task):
 
     # Search in the dynamic functions first, so a command can be sobstituted through the load functionality
     function = str(task['command'])
-    print("\n[+] EXECUTING " + function)
+    if function != "code":
+        print("\n[+] EXECUTING " + function)
 
     param_list = "task['id'],"
     if task['parameters'] != '' and task['parameters'][0] == "{":

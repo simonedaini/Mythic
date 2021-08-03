@@ -1,3 +1,6 @@
+from termcolor import colored
+
+
 def initialize():
     import math
     import hashlib
@@ -17,7 +20,7 @@ def initialize():
 
 def worker(param):
 
-    global break_function
+    global stopping_functions
 
     import random
     import math
@@ -81,10 +84,10 @@ def worker(param):
 
     out = "Password not found"
 
-    while not found and not break_function:
+    while not found and "parallel" not in stopping_functions:
         if break_function:
-            print("\t break detected, stopping")
-            break_function = False
+            print(colored("\t - Stopped", "red"))
+            stopping_functions.remove["parallel"]
             break
         word = rand_word()
         digest = hashlib.sha256(word.encode("utf-8")).hexdigest()

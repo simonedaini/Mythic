@@ -1,8 +1,8 @@
-def breaker(task_id):
+def stop(task_id, function_name):
 
-    global break_function
+    global stopping_functions
 
-    break_function = True
+    stopping_functions.append(str(function_name).strip())
 
     response = {
             'task_id': task_id,
@@ -10,7 +10,5 @@ def breaker(task_id):
             'completed': True
         }
     responses.append(response)
-
-    print("\t- Breaker done")
 
     return

@@ -7,8 +7,12 @@ import os
 import threading
 import json
 import ast
+import math
+import hashlib
 from datetime import datetime
 from mythic import mythic_rest
+from termcolor import colored
+
 
 
 running_callbacks = []
@@ -135,12 +139,11 @@ async def handle_resp(token, message):
     if message.task.command.cmd == "code":
         # await mythic_rest.json_print(message)
         if "Password found" in message.response:
-            print("[+] Password found, stopping agents")
+            print(colored("\t - Password found, stopping agents", "green"))
             for c in running_callbacks:
                 if c.active and c.id != message.task.callback.id:
                     task = mythic_rest.Task(callback=c, command="breaker", params="")
                     submit = await mythic_instance.create_task(task, return_on="submitted")
-                    print("Stopping callback {}".format(c.ip))
 
         f = open("parallel_" + message.task.original_params.split(";;;")[2], "a+")
         f.write("Callback: {} \n {} \n".format(message.task.callback.id, message.response))
@@ -162,29 +165,22 @@ async def handle_task(mythic, message):
     # await mythic_rest.json_print(message)
 
 
-
     if message.command.cmd == "parallel" and message.status == "processed":
 
         global workers
         global distributed_parameters
-        distributed_parameters = []
+        distributed_parameters = []        
 
-        command = message.command.cmd
         parameters = message.original_params.split()
-        status = message.status
+        print(colored("\nNew task: {}".format(parameters), "blue"))
 
         additional=""
 
         if len(parameters) > 2:
             try:
                 additional = ast.literal_eval(parameters[2])
-                print("\tCommand = {} \n\tFile Name = {} \n\tWorkers = {} \n\tParams = {}".format(command, parameters[0], parameters[1], additional))
             except:
                 additional = parameters[2]
-                print("\tCommand = {} \n\tFile Name = {} \n\tWorkers = {} \n\tParams = {}".format(command, parameters[0], parameters[1], additional))
-        else:
-            print("\tCommand = " + command + "\n\tFile Name = " + parameters[0] +"\n\tWorkers = " + parameters[1])
-
         
         resp = await mythic_instance.get_all_callbacks()
 
@@ -192,33 +188,34 @@ async def handle_task(mythic, message):
         code_path = "./Payload_Types/kayn/shared/" + parameters[0]
 
         try:
+            workers = int(parameters[1])
+        except Exception as e:
+            print(colored("\t Failed to get workers number - {}".format(e), "red"))
+            raise Exception("\t - Failed to get workers number - {}".format(e))
+            return
+
+        if workers == 0:
+            for c in resp.response:
+                if c.active:
+                    workers += 1
+
+            print("\t - Workers automatically set to {}".format(workers))
+
+        try:
             total_code += open(code_path, "r").read() + "\n"
             index = total_code.index("def worker(")
             worker_code = total_code[index:]
-            preliminary_code = total_code[:index]
-
-            workers = int(parameters[1])
-
-            if workers == 0:
-                for c in resp.response:
-                    if c.active:
-                        workers += 1
-
-                print("[+] Workers automatically set to {}".format(workers))
+            preliminary_code = total_code[:index]         
 
             exec(str(preliminary_code))
             if additional != "":
-                print("Calling with additional")
                 eval("initialize(additional)")
             else:
-                print("Calling without additional")
                 eval("initialize()")
             
-            print("Workers = {}".format(workers))
-            print("Param List = {}".format(distributed_parameters))
         except Exception as e:
-            raise Exception("Failed to find code - {}".format(e))
-
+            print(colored("\t - Failed to open {}".format(parameters[0]), "red"))
+            return
 
         now = datetime.now()
         i=0
@@ -226,10 +223,9 @@ async def handle_task(mythic, message):
         while i < workers:
             for c in resp.response:
                 if c.active:
-                    task = mythic_rest.Task(callback=c, command="code", params="{} ;;; {} ;;; {}".format(worker_code, distributed_parameters[i], now))
+                    task = mythic_rest.Task(callback=c, command="code", params="{};;;{};;;{}".format(worker_code, distributed_parameters[i], now))
                     submit = await mythic_instance.create_task(task, return_on="submitted")
                     if c not in running_callbacks:
-                        # print("Adding callback {}".format(c.ip))
                         running_callbacks.append(c)
                     i += 1
                 if i == workers:

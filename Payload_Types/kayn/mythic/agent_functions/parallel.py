@@ -10,7 +10,7 @@ class ParallelArguments(TaskArguments):
     async def parse_arguments(self):
         if len(self.command_line.split()) < 2:
             raise ValueError("Usage: parallel </shared/file_name.py> <#workers> <parameters>")
-        pass
+        
         params = self.command_line.split(" ")
         self.add_arg("file_name", params[0])
         self.add_arg("workers", params[1])
@@ -23,8 +23,8 @@ class ParallelArguments(TaskArguments):
 class ParallelCommand(CommandBase):
     cmd = "parallel"
     needs_admin = False
-    help_cmd = "parallel </shared/file_name.py> <#workers>"
-    description = "Run the worker function in file.py in parallel on <workers> agents passing <param_list> parameters"
+    help_cmd = "parallel </shared/file_name.py> <#workers> <parameters>"
+    description = "Run the worker function in file.py in parallel on <workers> agents passing <parameters>"
     version = 1
     supported_ui_features = [""]
     author = "@Kayn93"

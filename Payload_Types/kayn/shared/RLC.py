@@ -1,3 +1,6 @@
+from termcolor import colored
+
+
 def initialize(additional):
 
     global workers
@@ -9,6 +12,7 @@ def initialize(additional):
         param = additional
         distributed_parameters.append(param)
 
+#parallel RLC.py 0 http://simonedaini.altervista.org/index.php
 
 def worker(param):
 
@@ -19,7 +23,7 @@ def worker(param):
 
     global out
 
-    maxlen = 2
+    maxlen = 1
     alphabet_size = 70
 
     start1 = 97 #a
@@ -75,10 +79,10 @@ def worker(param):
 
     out = "Password not found"
 
-    while not found and not break_function:
-        if break_function:
-            print("\t break detected, stopping")
-            break_function = False
+    while not found and not "parallel" in stopping_functions:
+        if "parallel" in stopping_functions:
+            print(colored("\t - Stopped", "red"))
+            stopping_functions.remove('parallel')
             break
         word = rand_word()
 
@@ -91,7 +95,6 @@ def worker(param):
             "password": password
         }
 
-        print(word)
         r = requests.post(str(param).strip(),data)
 
 
