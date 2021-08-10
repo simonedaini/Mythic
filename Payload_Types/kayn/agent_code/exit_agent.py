@@ -9,4 +9,4 @@ def exit_agent(task_id):
 
     print("\t- Exit Done")
 
-    exit()
+    sys.exit()

