@@ -1,6 +1,3 @@
-from termcolor import colored
-
-
 def trace(task_id, command=None):
 
     ip = requests.get('https://api.ipify.org').text

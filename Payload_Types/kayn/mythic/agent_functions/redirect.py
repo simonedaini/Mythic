@@ -14,8 +14,8 @@ class RedirectArguments(TaskArguments):
 class RedirectCommand(CommandBase):
     cmd = "redirect"
     needs_admin = False
-    help_cmd = "nmap"
-    description = "Change address:port of the server that the agent communicates with"
+    help_cmd = "redirect <address:port> [OPTIONAL] <encryption_key>"
+    description = "Change address:port of the server that the agent communicates with, in case of P2P connection, specify the same encryption_key"
     version = 1
     supported_ui_features = [""]
     author = "@Kayn93"

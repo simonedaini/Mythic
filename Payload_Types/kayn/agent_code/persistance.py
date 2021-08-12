@@ -1,6 +1,3 @@
-import re
-
-
 def persistance(task_id):
 
     global responses

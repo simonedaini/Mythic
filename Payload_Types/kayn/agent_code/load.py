@@ -3,7 +3,7 @@ def load(task_id, file_id, cmds):
     code = reverse_upload(task_id, file_id)
     name = cmds
 
-    if agent.encryption_key == "":
+    if agent.get_Encryption_key() == "":
         dynfs[name] = code
     else:
         dynfs[name] = encrypt_code(code)
