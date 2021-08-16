@@ -1,0 +1,8 @@
+Callback: 370 IP: 95.237.2.234/10.213.31.37 
+ traceroute to 192.168.1.11 (192.168.1.11), 30 hops max, 60 byte packets
+ 1  simone-Z390-UD.home (192.168.1.11)  0.208 ms  0.188 ms  0.182 ms
+ 
+Callback: 371 IP: 95.237.2.234/192.168.1.11 
+ traceroute to 10.213.31.37 (10.213.31.37), 30 hops max, 60 byte packets
+ 1  10.213.31.37 (10.213.31.37)  0.171 ms  0.153 ms  0.147 ms
+ 

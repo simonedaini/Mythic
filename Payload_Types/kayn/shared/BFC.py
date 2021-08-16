@@ -122,7 +122,7 @@ def initialize():
 
 def worker(param):
 
-    global out
+    global worker_output
 
     if isinstance(param, str):
         param = param.strip()
@@ -190,15 +190,15 @@ def worker(param):
             break
         digest = hashlib.sha256(word.encode("utf-8")).hexdigest()
         if digest == param["digest"]:
-            out = "Password found: " + word
-            print(out)
+            worker_output = "Password found: " + word
+            print(worker_output)
             found = True
             break
         word = next_word(word)
 
     if found == False:
-        out = "Password not found"
-        print(out)
+        worker_output = "Password not found"
+        print(worker_output)
 
 
     

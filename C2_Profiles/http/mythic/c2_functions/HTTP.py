@@ -11,7 +11,7 @@ class HTTP(C2Profile):
         C2ProfileParameter(
             name="callback_port",
             description="Callback Port",
-            default_value="80",
+            default_value="8888",
             verifier_regex="^[0-9]+$",
             required=False,
         ),
@@ -74,7 +74,7 @@ class HTTP(C2Profile):
         C2ProfileParameter(
             name="callback_host",
             description="Callback Host",
-            default_value="http://95.239.61.225",
+            default_value="http://95.237.2.234",
             verifier_regex="^(http|https):\/\/[a-zA-Z0-9]+",
         ),
         C2ProfileParameter(

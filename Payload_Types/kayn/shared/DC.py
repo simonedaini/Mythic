@@ -30,7 +30,7 @@ def initialize():
 
 def worker(param):
 
-    global out
+    global worker_output
 
     param = ast.literal_eval(param)
 
@@ -50,12 +50,12 @@ def worker(param):
         word = word.strip()
         digest = hashlib.sha256(word.encode("utf-8")).hexdigest()
         if digest == param["digest"]:
-            out = "Password found: " + word
-            print(out)
+            worker_output = "Password found: " + word
+            print(worker_output)
             found = True
             return
 
     if found == False:
-        out = "Password not found"
-        print(out)
+        worker_output = "Password not found"
+        print(worker_output)
         return

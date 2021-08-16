@@ -1,6 +1,3 @@
-from termcolor import colored
-
-
 def initialize(additional):
 
     global workers
@@ -21,7 +18,7 @@ def worker(param):
     import random
     import math
 
-    global out
+    global worker_output
 
     maxlen = 1
     alphabet_size = 70
@@ -77,7 +74,7 @@ def worker(param):
 
     found = False
 
-    out = "Password not found"
+    worker_output = "Password not found"
 
     while not found:
         if "parallel" in stopping_functions:
@@ -100,6 +97,6 @@ def worker(param):
 
         if "Cracked" in r.text:
             print("Password found: " + word)
-            out = "Password found: " + word
+            worker_output = "Password found: " + word
             found = True
             break

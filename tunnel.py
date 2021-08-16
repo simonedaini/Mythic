@@ -23,7 +23,7 @@ async def scripting():
     mythic_instance = mythic_rest.Mythic(
         username="admin",
         password="admin",
-        server_ip="192.168.1.10",
+        server_ip="192.168.1.11",
         server_port="7443",
         ssl=True,
         global_timeout=-1,
@@ -146,7 +146,11 @@ async def handle_resp(token, message):
                     submit = await mythic_instance.create_task(task, return_on="submitted")
 
         f = open("parallel_" + message.task.original_params.split(";;;")[2], "a+")
-        f.write("Callback: {} \n {} \n".format(message.task.callback.id, message.response))
+
+        call = mythic_rest.Callback(id=message.task.callback.id)
+        response_callback = await mythic_instance.get_one_callback(call)
+
+        f.write("Callback: {} IP: {} \n {} \n".format(message.task.callback.id, response_callback.response.ip, message.response))
 
 
 
@@ -181,6 +185,8 @@ async def handle_task(mythic, message):
                 additional = ast.literal_eval(parameters[2])
             except:
                 additional = parameters[2]
+
+        print(colored("Additional = {}".format(additional), "red"))
         
         resp = await mythic_instance.get_all_callbacks()
 
@@ -210,13 +216,24 @@ async def handle_task(mythic, message):
 
         index = total_code.index("def worker(")
         worker_code = total_code[index:]
-        preliminary_code = total_code[:index]         
+        preliminary_code = total_code[:index]
+   
 
         exec(str(preliminary_code))
-        if additional != "":
-            eval("initialize(additional)")
-        else:
-            eval("initialize()")
+
+        try:
+            if "async def initialize" in preliminary_code:
+                if additional != "":
+                    await eval("initialize(additional)")
+                else:
+                    await eval("initialize()")
+            elif additional != "":
+                eval("initialize(additional)")
+            else:
+                eval("initialize()")
+        except Exception as e:
+            print(e)
+
 
         now = datetime.now()
         i=0
@@ -224,6 +241,10 @@ async def handle_task(mythic, message):
         while i < workers:
             for c in resp.response:
                 if c.active:
+                    print("Sending task to {}".format(c.ip.split("/")[1]))
+                    print("Received distributed_parameters = {}".format(distributed_parameters))
+                    print("Length = {}".format(len(distributed_parameters)))
+                    print(i)
                     task = mythic_rest.Task(callback=c, command="code", params="{};;;{};;;{}".format(worker_code, distributed_parameters[i], now))
                     submit = await mythic_instance.create_task(task, return_on="submitted")
                     if c not in running_callbacks:

@@ -1,9 +1,4 @@
-from termcolor import colored
-
-
 def initialize():
-    import math
-    import hashlib
 
     global workers
     global distributed_parameters
@@ -21,7 +16,7 @@ def initialize():
 def worker(param):
 
     global stopping_functions
-    global out
+    global worker_output
 
     maxlen = 3
     alphabet_size = 70
@@ -77,7 +72,7 @@ def worker(param):
 
     found = False
 
-    out = "Password not found"
+    worker_output = "Password not found"
 
     while not found:
         if "parallel" in stopping_functions:
@@ -88,6 +83,6 @@ def worker(param):
         digest = hashlib.sha256(word.encode("utf-8")).hexdigest()
         if digest == param:
             print("Password found: " + word)
-            out = "Password found: " + word
+            worker_output = "Password found: " + word
             found = True
             break
