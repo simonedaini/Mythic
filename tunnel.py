@@ -194,18 +194,6 @@ def virtual_topology(file_name):
             dst.append(dest_ip)
             print("DEST IP = {}".format(dest_ip))
 
-    # for c in callbacks:
-    #     if c != "":
-    #         a = c.split("IP:")[1]
-    #         b = a.split("/")[1]
-    #         d = b.split(".")
-    #         scr_ip = "{}.{}.{}.{}".format(d[0],d[1],d[2],d[3].split(" ")[0]).strip()
-    #         print(c[start:end])
-    #         src.append(scr_ip)
-
-
-
-
 
 
 
