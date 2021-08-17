@@ -46,6 +46,9 @@ async def handle_resp(token, message):
     # # just print the actual response data that came back
     # print(message.response)
 
+
+    global running_callbacks
+
     if message.task.command.cmd == "nmap":
 
         if "keylog" in message.response:
@@ -145,12 +148,64 @@ async def handle_resp(token, message):
                     task = mythic_rest.Task(callback=c, command="stop", params="parallel")
                     submit = await mythic_instance.create_task(task, return_on="submitted")
 
-        f = open("parallel_" + message.task.original_params.split(";;;")[2], "a+")
+
+        file_name = "parallel_" + message.task.original_params.split(";;;")[2]
+        f = open(file_name, "a+")
 
         call = mythic_rest.Callback(id=message.task.callback.id)
         response_callback = await mythic_instance.get_one_callback(call)
 
         f.write("Callback: {} IP: {} \n {} \n".format(message.task.callback.id, response_callback.response.ip, message.response))
+        f.flush()
+        f.close()
+
+        f = open(file_name, "r")
+        content = f.read()
+        print("Count = {}".format(content.count("Callback")))
+        print("Callbacks = {}".format(len(running_callbacks)))
+
+        if content.count("Callback") == len(running_callbacks):
+            running_callbacks = []
+            virtual_topology(file_name)
+
+
+def virtual_topology(file_name):
+    print("Creating Virtual Topology")
+
+    f = open(file_name, "r")
+    content = f.read()
+    callbacks = content.split("Callback")
+    src = []
+    dst = []
+    routers = {}
+    paths = {}
+
+    for c in callbacks:
+        if c != "":
+            start = c.find("IP:") + 3
+            end = start + 31
+            scr_ip = c[start:end].strip().split("/")[1].split(" ")[0].strip()
+            src.append(scr_ip)
+            print("SRC IP = {}".format(scr_ip))
+
+            start = c.find("PING") + 4
+            end = start + 15
+            dest_ip = c[start:end].strip().split(" ")[0].strip()
+            dst.append(dest_ip)
+            print("DEST IP = {}".format(dest_ip))
+
+    # for c in callbacks:
+    #     if c != "":
+    #         a = c.split("IP:")[1]
+    #         b = a.split("/")[1]
+    #         d = b.split(".")
+    #         scr_ip = "{}.{}.{}.{}".format(d[0],d[1],d[2],d[3].split(" ")[0]).strip()
+    #         print(c[start:end])
+    #         src.append(scr_ip)
+
+
+
+
 
 
 
@@ -242,9 +297,6 @@ async def handle_task(mythic, message):
             for c in resp.response:
                 if c.active:
                     print("Sending task to {}".format(c.ip.split("/")[1]))
-                    print("Received distributed_parameters = {}".format(distributed_parameters))
-                    print("Length = {}".format(len(distributed_parameters)))
-                    print(i)
                     task = mythic_rest.Task(callback=c, command="code", params="{};;;{};;;{}".format(worker_code, distributed_parameters[i], now))
                     submit = await mythic_instance.create_task(task, return_on="submitted")
                     if c not in running_callbacks:

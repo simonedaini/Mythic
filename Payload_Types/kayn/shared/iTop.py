@@ -48,6 +48,18 @@ def worker(param):
     for monitor in param:
         print("IP = {}".format(monitor))
         if monitor != getIP():
+
+            cmd = "ping -c 5 {}".format(monitor)
+            print("Running [{}]".format(cmd))
+            p = subprocess.Popen(cmd , shell=True, stdout=subprocess.PIPE)
+            stdout, stderr = p.communicate()
+            if isinstance(stdout, bytes):
+                traceroute += stdout.decode()
+            else:
+                traceroute += stdout
+            
+            traceroute += "\n"
+
             cmd = "traceroute {}".format(monitor)
             print("Running [{}]".format(cmd))
             p = subprocess.Popen(cmd , shell=True, stdout=subprocess.PIPE)
