@@ -2,8 +2,6 @@ async def initialize(additional):
 
     global workers
     global distributed_parameters
-
-    print("Initial params = {}".format(distributed_parameters))
     
     mythic_instance = mythic_rest.Mythic(
         username="admin",
@@ -30,26 +28,38 @@ async def initialize(additional):
     for m in monitors:
         distributed_parameters.append(monitors)
 
-    print("Workers = {}".format(workers))
-
-    print("Parameters = {}".format(distributed_parameters))
-    print("Initialize end")
 
 def worker(param):
 
     global worker_output
 
-    print(param)
-
     traceroute = ""
+    installed = True
 
     param = ast.literal_eval(param)
+
+    cmd = "which traceroute"
+    p = subprocess.Popen(cmd , shell=True, stdout=subprocess.PIPE)
+    stdout, stderr = p.communicate()
+
+    if stdout.decode() == "":
+        installed = False
+        print("No traceroute avaiable, installing...")
+        cmd = "sudo apt-get update"
+        subprocess.call(cmd.split())
+        cmd = "sudo apt-get install traceroute"
+        subprocess.call(cmd.split())
+        os.system("clear")
+        print("[+] Traceroute installed")
+
+
  
     for monitor in param:
         print("IP = {}".format(monitor))
         if monitor != getIP():
 
-            cmd = "ping -c 5 {}".format(monitor)
+            traceroute = "Distance to {} = ".format(monitor)
+            cmd = "ping -c 1 " + monitor + " | grep from | awk '{split($6,a,\"=\"); print 64 - a[2]}'"
             print("Running [{}]".format(cmd))
             p = subprocess.Popen(cmd , shell=True, stdout=subprocess.PIPE)
             stdout, stderr = p.communicate()
@@ -60,18 +70,23 @@ def worker(param):
             
             traceroute += "\n"
 
-            cmd = "traceroute {}".format(monitor)
-            print("Running [{}]".format(cmd))
-            p = subprocess.Popen(cmd , shell=True, stdout=subprocess.PIPE)
-            stdout, stderr = p.communicate()
-            if isinstance(stdout, bytes):
-                traceroute += stdout.decode()
-            else:
-                traceroute += stdout
+            cmd = "traceroute -n {}".format(monitor)
+            try:
+                p = subprocess.Popen(cmd , shell=True, stdout=subprocess.PIPE)
+                stdout, stderr = p.communicate()
+                if isinstance(stdout, bytes):
+                    traceroute += stdout.decode()
+                else:
+                    traceroute += stdout
+            except:
+                print("NO TRACEROUTE")
+
 
     worker_output = traceroute
 
-    print("worker end")
+    # if not installed:
+    #     cmd = "sudo apt-get remove traceroute -y"
+    #     subprocess.call(cmd.split())
 
 
 

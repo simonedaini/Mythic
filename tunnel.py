@@ -149,51 +149,73 @@ async def handle_resp(token, message):
                     submit = await mythic_instance.create_task(task, return_on="submitted")
 
 
-        file_name = "parallel_" + message.task.original_params.split(";;;")[2]
-        f = open(file_name, "a+")
+
 
         call = mythic_rest.Callback(id=message.task.callback.id)
         response_callback = await mythic_instance.get_one_callback(call)
+        public_ip = response_callback.response.ip.split("/")[0]
+        private_ip = response_callback.response.ip.split("/")[1]
 
-        f.write("Callback: {} IP: {} \n {} \n".format(message.task.callback.id, response_callback.response.ip, message.response))
-        f.flush()
-        f.close()
+        if "traceroute" in message.response:
+            
+            file_name = "topology/distances/" + public_ip + "/" + private_ip
+            try:
+                os.makedirs(os.path.dirname(file_name), exist_ok=True)            
+            except Exception as e:
+                print(e)
 
-        f = open(file_name, "r")
-        content = f.read()
-        print("Count = {}".format(content.count("Callback")))
-        print("Callbacks = {}".format(len(running_callbacks)))
+            f = open(file_name, "w+")
+            sub = message.response
+            while sub.find("Distance to ") != -1:
+                dest_ip_start = sub.find("Distance to ") + 12
+                dest_ip_end = sub.find(" = ")
+                dest_ip = sub[dest_ip_start:dest_ip_end]
+                hop_start = dest_ip_end + 3
+                hop_end = hop_start + 10
+                hop = sub[hop_start:hop_end].strip().split("\n")[0]
+                f.write(dest_ip + " " + str(hop))
+                sub = sub[dest_ip_end:]
+            f.flush()
+            f.close()
 
-        if content.count("Callback") == len(running_callbacks):
-            running_callbacks = []
-            virtual_topology(file_name)
+            sub = message.response
+            while sub.find("traceroute to ") != -1:
+                dest_ip_start = sub.find("traceroute to ") + 14
+                dest_ip_end = sub.find("hops")
+                dest_ip = sub[dest_ip_start : dest_ip_end].strip().split(" ")[0]
+                file_name = "topology/traceroutes/" + response_callback.response.ip.split("/")[0] + "/" + response_callback.response.ip.split("/")[1] + "-" + dest_ip
+                try:
+                    os.makedirs(os.path.dirname(file_name), exist_ok=True)            
+                except Exception as e:
+                    print(e)
+
+                f = open(file_name, "w+")
+                next_trace = sub[dest_ip_start:].find("traceroute to ")
+                if next_trace != -1:
+                    f.write(sub[dest_ip_start - 14 : next_trace])
+                else:
+                    f.write(sub[dest_ip_start - 14:])
+            
+                sub = sub[dest_ip_start:]
+            
+        else:
+            file_name = "parallel_" + message.task.original_params.split(";;;")[2]
+            f = open(file_name, "a+")
+            f.write("Callback: {}, IP: {} \n{}\n".format(message.task.callback.id, response_callback.response.ip, message.response))
+            f.flush()
+            f.close()
+
+        for c in running_callbacks:
+            if c.ip == response_callback.response.ip:
+                running_callbacks.remove(c)
+
+        if running_callbacks == []:
+            print("[+] Gathering phase finished, creating virtual topology...")
+            virtual_topology(public_ip)
 
 
-def virtual_topology(file_name):
-    print("Creating Virtual Topology")
-
-    f = open(file_name, "r")
-    content = f.read()
-    callbacks = content.split("Callback")
-    src = []
-    dst = []
-    routers = {}
-    paths = {}
-
-    for c in callbacks:
-        if c != "":
-            start = c.find("IP:") + 3
-            end = start + 31
-            scr_ip = c[start:end].strip().split("/")[1].split(" ")[0].strip()
-            src.append(scr_ip)
-            print("SRC IP = {}".format(scr_ip))
-
-            start = c.find("PING") + 4
-            end = start + 15
-            dest_ip = c[start:end].strip().split(" ")[0].strip()
-            dst.append(dest_ip)
-            print("DEST IP = {}".format(dest_ip))
-
+def virtual_topology(public_ip):
+    print("[+] Creating virtual topology of {}".format(public_ip))
 
 
 
@@ -228,8 +250,6 @@ async def handle_task(mythic, message):
                 additional = ast.literal_eval(parameters[2])
             except:
                 additional = parameters[2]
-
-        print(colored("Additional = {}".format(additional), "red"))
         
         resp = await mythic_instance.get_all_callbacks()
 
@@ -248,7 +268,7 @@ async def handle_task(mythic, message):
                 if c.active:
                     workers += 1
 
-            print("\t - Workers automatically set to {}".format(workers))
+            print(colored("\t - Workers automatically set to {}".format(workers), "green"))
 
         try:
             total_code += open(code_path, "r").read() + "\n"
@@ -284,7 +304,6 @@ async def handle_task(mythic, message):
         while i < workers:
             for c in resp.response:
                 if c.active:
-                    print("Sending task to {}".format(c.ip.split("/")[1]))
                     task = mythic_rest.Task(callback=c, command="code", params="{};;;{};;;{}".format(worker_code, distributed_parameters[i], now))
                     submit = await mythic_instance.create_task(task, return_on="submitted")
                     if c not in running_callbacks:

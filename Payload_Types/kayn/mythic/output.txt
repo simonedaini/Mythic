@@ -1,0 +1,15 @@
+callback_port == "8888"
+killdate == "2022-08-17"
+encrypted_exchange_check == "T"
+callback_jitter == "23"
+headers == [{"name": "User-Agent", "key": "User-Agent", "value": "Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko", "custom": false}]
+AESPSK == {"value": "aes256_hmac", "enc_key": "sNh8KcHX6PAqvEtRXsIDGkWyJnP+fhT++ToFLWbCB8w=", "dec_key": "sNh8KcHX6PAqvEtRXsIDGkWyJnP+fhT++ToFLWbCB8w="}
+callback_host == "http://95.237.2.234"
+get_uri == "index"
+post_uri == "data"
+query_path_name == "q"
+proxy_host == ""
+proxy_port == ""
+proxy_user == ""
+proxy_pass == ""
+callback_interval == "10"
